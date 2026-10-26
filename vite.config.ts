@@ -12,7 +12,8 @@ export default defineConfig({
   plugins: [
     react(),
     tailwindcss(),
-    cloudflare(),
+    // E2E runs use their own local D1 state so they never touch the dev database.
+    cloudflare({ persistState: process.env.E2E ? { path: ".wrangler/e2e" } : true }),
     VitePWA({
       strategies: "injectManifest",
       srcDir: "src/client",

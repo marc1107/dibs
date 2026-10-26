@@ -1,0 +1,52 @@
+name: security-fix
+
+on:
+  schedule:
+    - cron: "41 5 * * 2"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+  security-events: read
+  id-token: write
+
+jobs:
+  fix:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - name: Collect open alerts
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+          # Optional fine-grained PAT with "Dependabot alerts: read"; GITHUB_TOKEN cannot read them.
+          ALERTS_TOKEN: ${{ secrets.SECURITY_ALERTS_TOKEN }}
+        run: |
+          gh api "repos/${{ github.repository }}/code-scanning/alerts?state=open" > codeql-alerts.json || echo "[]" > codeql-alerts.json
+          if [ -n "$ALERTS_TOKEN" ]; then
+            GH_TOKEN="$ALERTS_TOKEN" gh api "repos/${{ github.repository }}/dependabot/alerts?state=open" > dependabot-alerts.json || echo "[]" > dependabot-alerts.json
+          else
+            echo "[]" > dependabot-alerts.json
+          fi
+          pnpm audit --json > pnpm-audit.json || true
+          echo "codeql: $(jq length codeql-alerts.json), dependabot: $(jq length dependabot-alerts.json)"
+      - uses: anthropics/claude-code-action@v1
+        with:
+          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          prompt: |
+            You maintain this repository (see CLAUDE.md). Open security findings are in
+            codeql-alerts.json, dependabot-alerts.json and pnpm-audit.json (do not commit these files).
+            If there is nothing to fix, stop without changes.
+            Otherwise fix the findings with minimal, focused changes (prefer dependency updates over
+            overrides), run `pnpm lint && pnpm typecheck && pnpm test`, and open ONE pull request
+            against main titled "fix(security): ..." that lists every alert and how it was resolved.
+            Never weaken tests or security headers to make checks pass.
+          claude_args: --allowedTools "Bash(pnpm:*),Bash(git:*),Bash(gh pr:*),Edit,Read,Write,Glob,Grep"

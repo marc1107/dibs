@@ -4,7 +4,7 @@ import { Navigate, Route, Routes, useNavigate } from "react-router";
 import { Notices } from "./components/Notices";
 import { Button, CarIcon, Spinner } from "./components/ui";
 import { ApiError } from "./lib/api";
-import { useMe } from "./lib/queries";
+import { invalidateData, useMe } from "./lib/queries";
 import { AdminPage } from "./pages/AdminPage";
 import { BookingPage } from "./pages/BookingPage";
 import { AuditPage, HistoryPage } from "./pages/HistoryPage";
@@ -15,12 +15,13 @@ import { RequestPage } from "./pages/RequestPage";
 import { RequestsPage } from "./pages/RequestsPage";
 import { SettingsPage } from "./pages/SettingsPage";
 
-/** Tapping a push notification posts the target path from the service worker. */
+/** Messages from the service worker: refresh on incoming push, open the target screen on tap. */
 function useNotificationNavigation() {
   const navigate = useNavigate();
   useEffect(() => {
     if (!("serviceWorker" in navigator)) return;
     const onMessage = (e: MessageEvent) => {
+      if (e.data?.type === "refresh") invalidateData();
       if (e.data?.type === "navigate" && typeof e.data.url === "string" && e.data.url.startsWith("/")) navigate(e.data.url);
     };
     navigator.serviceWorker.addEventListener("message", onMessage);

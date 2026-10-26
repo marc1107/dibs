@@ -1,5 +1,7 @@
 // Cloudflare Worker configuration. Values marked with "REPLACE_" are placeholders,
-// see docs/SETUP.md for what to fill in. Secrets never go into this file.
+// see docs/SETUP.md for what to fill in. Secrets never go into this file (the repo is public):
+// BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VAPID_PRIVATE_KEY,
+// TURNSTILE_SECRET_KEY and ADMIN_EMAIL are set with `wrangler secret put`.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
   "name": "schluesselbrett",
@@ -8,7 +10,7 @@
   "compatibility_flags": ["nodejs_compat"],
   "observability": { "enabled": true },
 
-  // Static assets (the React PWA). API, auth and iCal requests run through the Worker first;
+  // Static assets (the React PWA). API and iCal requests run through the Worker first;
   // everything else is served directly from the asset store with SPA fallback.
   "assets": {
     "not_found_handling": "single-page-application",
@@ -17,18 +19,17 @@
 
   // REPLACE_: your (sub)domain, e.g. "auto.example.com". The zone must be on Cloudflare DNS.
   "routes": [{ "pattern": "REPLACE_WITH_YOUR_DOMAIN", "custom_domain": true }],
+  "workers_dev": false,
 
   "vars": {
-    // Public base URL of the app (used for OAuth callbacks, passkey RP ID and iCal links).
+    // Public base URL of the app (OAuth callback, passkey RP ID, iCal links).
     "APP_URL": "https://REPLACE_WITH_YOUR_DOMAIN",
-    // The Google account with this e-mail becomes admin automatically on first sign-in.
-    "ADMIN_EMAIL": "REPLACE_WITH_ADMIN_EMAIL",
     // Cloudflare Turnstile site key (public). Create a widget in the Cloudflare dashboard.
     "TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY",
     // Public VAPID key from `pnpm vapid`.
     "VAPID_PUBLIC_KEY": "REPLACE_WITH_VAPID_PUBLIC_KEY",
-    // Contact for push services, "mailto:you@example.com".
-    "VAPID_SUBJECT": "mailto:REPLACE_WITH_ADMIN_EMAIL"
+    // Contact for push services (a mailto: or https: URL).
+    "VAPID_SUBJECT": "https://REPLACE_WITH_YOUR_DOMAIN"
   },
 
   "d1_databases": [
@@ -42,7 +43,7 @@
   ],
 
   "r2_buckets": [
-    // Private bucket for the weekly database export. `wrangler r2 bucket create schluesselbrett-backups`.
+    // Private bucket for the weekly database export: `wrangler r2 bucket create schluesselbrett-backups`.
     { "binding": "BACKUPS", "bucket_name": "schluesselbrett-backups" }
   ],
 
@@ -54,5 +55,34 @@
   "triggers": {
     // Every 15 minutes: reminders. Sundays 03:00 UTC: backup export to R2.
     "crons": ["*/15 * * * *", "0 3 * * 7"]
+  },
+
+  "env": {
+    // PR previews (preview.yml): separate Worker and database, no cron jobs, no custom domain.
+    "preview": {
+      "name": "schluesselbrett-preview",
+      "workers_dev": true,
+      "routes": [],
+      "vars": {
+        "APP_URL": "https://schluesselbrett-preview.REPLACE_WITH_WORKERS_SUBDOMAIN.workers.dev",
+        "TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY",
+        "VAPID_PUBLIC_KEY": "REPLACE_WITH_VAPID_PUBLIC_KEY",
+        "VAPID_SUBJECT": "https://REPLACE_WITH_YOUR_DOMAIN"
+      },
+      "d1_databases": [
+        {
+          "binding": "DB",
+          "database_name": "schluesselbrett-preview",
+          // REPLACE_: output of `wrangler d1 create schluesselbrett-preview`.
+          "database_id": "REPLACE_WITH_PREVIEW_D1_DATABASE_ID",
+          "migrations_dir": "migrations"
+        }
+      ],
+      "r2_buckets": [{ "binding": "BACKUPS", "bucket_name": "schluesselbrett-backups" }],
+      "ratelimits": [
+        { "name": "AUTH_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
+      ],
+      "triggers": { "crons": [] }
+    }
   }
 }

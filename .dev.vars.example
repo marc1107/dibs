@@ -14,12 +14,14 @@ VAPID_PRIVATE_KEY=REPLACE_WITH_VAPID_PRIVATE_KEY
 # Cloudflare's official Turnstile test keys (always pass).
 TURNSTILE_SECRET_KEY=1x0000000000000000000000000000000AA
 
+# Google account that becomes admin automatically (production: `wrangler secret put ADMIN_EMAIL`).
+ADMIN_EMAIL=marc@example.com
+
 # Local overrides of wrangler.jsonc vars.
 APP_URL=http://localhost:5173
-ADMIN_EMAIL=marc@example.com
 TURNSTILE_SITE_KEY=1x00000000000000000000AA
 VAPID_PUBLIC_KEY=REPLACE_WITH_VAPID_PUBLIC_KEY
-VAPID_SUBJECT=mailto:marc@example.com
+VAPID_SUBJECT=http://localhost:5173
 
 # Enables /api/dev/login for local testing. Only honoured on localhost. NEVER set in production.
 DEV_LOGIN=true

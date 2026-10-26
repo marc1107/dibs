@@ -26,10 +26,11 @@ export const CACHE_TIME = 14 * 24 * 3600_000;
 export const queryClient = new QueryClient({
   defaultOptions: {
     queries: {
-      // Cached data (persisted in IndexedDB) is shown first; refetched when online.
+      // Cached data (persisted in IndexedDB) is shown immediately and always revalidated:
+      // in a shared calendar, what the others did must be visible as soon as the app opens.
       networkMode: "offlineFirst",
       gcTime: CACHE_TIME,
-      staleTime: 30_000,
+      staleTime: 0,
       retry: (count, err) => !(err instanceof ApiError && err.status < 500) && count < 2,
       refetchOnWindowFocus: true,
     },
@@ -60,8 +61,15 @@ export function invalidateData() {
   void queryClient.invalidateQueries({ predicate: (q) => q.queryKey[0] !== "me" && q.queryKey[0] !== "users" });
 }
 
+/** Always revalidated (cheap), and polled while waiting for approval so access appears without a reload. */
 export const useMe = () =>
-  useQuery({ queryKey: keys.me, queryFn: () => api<MeDto>("/api/me"), retry: false, staleTime: 60_000 });
+  useQuery({
+    queryKey: keys.me,
+    queryFn: () => api<MeDto>("/api/me"),
+    retry: false,
+    staleTime: 0,
+    refetchInterval: (q) => (q.state.data?.user.status === "pending" ? 15_000 : false),
+  });
 
 export const useUsers = (enabled = true) =>
   useQuery({ queryKey: keys.users, queryFn: () => api<{ users: UserListEntry[] }>("/api/users").then((r) => r.users), enabled });

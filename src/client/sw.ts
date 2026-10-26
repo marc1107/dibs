@@ -25,6 +25,12 @@ interface PushData {
 self.addEventListener("push", (event) => {
   const data = (event.data?.json() ?? {}) as Partial<PushData>;
   event.waitUntil(
+    (async () => {
+      // Open app windows refetch right away, so the change is visible without a tap.
+      for (const client of await self.clients.matchAll({ type: "window" })) client.postMessage({ type: "refresh" });
+    })(),
+  );
+  event.waitUntil(
     self.registration.showNotification(data.title ?? "Auto", {
       body: data.body,
       tag: data.tag,
