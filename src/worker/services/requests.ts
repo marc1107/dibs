@@ -1,16 +1,16 @@
 import type { RequestDetailDto, RequestsResponse } from "@shared/api";
 import { counterPlan, grantEffect, type GrantEffect } from "@shared/resolution";
 import type { RespondInput } from "@shared/schemas";
-import { floorToSlot, formatRange, utcToLocal, type Interval } from "@shared/time";
-import { and, asc, eq, gt, inArray, lt, ne } from "drizzle-orm";
+import { formatRange, utcToLocal, type Interval } from "@shared/time";
+import { and, asc, eq, gt, inArray, lt, ne, sql } from "drizzle-orm";
 import { alias } from "drizzle-orm/sqlite-core";
 import { booking, request } from "../db/schema";
 import { AppError, forbidden, notFound } from "../lib/errors";
 import { newId } from "../lib/ids";
-import { coversWholeDays, reevaluateRequestsTargeting, requestDetails, tryActivate } from "./bookings";
+import { coversWholeDays, endNowChanges, reevaluateRequestsTargeting, requestDetails, tryActivate } from "./bookings";
 import { auditInsert, isAdmin, nowIso, sourceFor, type ServiceCtx } from "./context";
 import { bookingSnapshot, loadBooking, toBookingDto, userNames, type BookingRow, type RequestRow } from "./mappers";
-import { runBatch, type Statement } from "../lib/batch";
+import { guard, GuardError, runBatch, type Statement } from "../lib/batch";
 
 async function loadRequest(ctx: ServiceCtx, id: string) {
   const r = await ctx.db.query.request.findFirst({ where: eq(request.id, id) });
@@ -96,7 +96,8 @@ export async function respond(ctx: ServiceCtx, requestId: string, input: Respond
   const decided = { decidedBy: ctx.actor.id, decidedAt: now };
   const requesterName = names.get(incoming.ownerId) ?? "jemand";
   const answerer = names.get(target.ownerId) ?? "Die Erstbuchende";
-  const statements: Statement[] = [];
+  // Guard: if someone else answered in the meantime, the whole batch is rolled back.
+  const statements: Statement[] = [guard(sql`NOT EXISTS (SELECT 1 FROM request WHERE id = ${r.id} AND status = 'open')`)];
   let answer: { title: string; body: string };
 
   if (input.action === "grant") {
@@ -169,8 +170,15 @@ export async function respond(ctx: ServiceCtx, requestId: string, input: Respond
     answer = { title: `${answerer} braucht das Auto selbst`, body: `Deine Anfrage ${formatRange(incoming, incoming.allDay)} wurde abgelehnt.` };
   }
 
-  await runBatch(ctx.env.DB, statements);
+  try {
+    await runBatch(ctx.env.DB, statements);
+  } catch (err) {
+    if (err instanceof GuardError) throw new AppError("conflict", "Diese Anfrage wurde bereits beantwortet");
+    throw err;
+  }
   if (input.action !== "decline") await tryActivate(ctx, incoming.id);
+  // Others waiting on the same first booking: it may no longer block them, or they now wait for the requester.
+  if (input.action !== "decline") await reevaluateRequestsTargeting(ctx, [target.id]);
 
   const byAdmin = ctx.actor.id !== target.ownerId;
   ctx.notifier.add([incoming.ownerId], "request_answer", {
@@ -196,10 +204,9 @@ export async function withdraw(ctx: ServiceCtx, requestId: string) {
   if (r.status !== "open" && r.status !== "partial") throw new AppError("conflict", "Diese Anfrage ist nicht mehr offen");
 
   const now = nowIso(ctx);
-  const running = incoming.status === "active" && incoming.startsAt <= now && incoming.endsAt > now;
-  const bookingChanges = running
-    ? { status: "ended_early" as const, endsAt: floorToSlot(ctx.now), updatedAt: now }
-    : { status: "cancelled" as const, updatedAt: now };
+  if (incoming.status === "active" && incoming.endsAt <= now) throw new AppError("already_over", "Diese Buchung ist schon vorbei");
+  const running = incoming.status === "active" && incoming.startsAt <= now;
+  const bookingChanges = running ? endNowChanges(incoming, ctx.now, now) : { status: "cancelled" as const, updatedAt: now };
   const openOthers = await ctx.db
     .select()
     .from(request)
@@ -213,7 +220,7 @@ export async function withdraw(ctx: ServiceCtx, requestId: string) {
     ctx.db.update(booking).set(bookingChanges).where(eq(booking.id, incoming.id)),
     requestAudit(ctx, r, { status: "withdrawn" }, "request.withdrawn", incoming.ownerId),
     auditInsert(ctx, {
-      action: running ? "booking.ended_early" : "booking.cancelled",
+      action: bookingChanges.status === "ended_early" ? "booking.ended_early" : "booking.cancelled",
       bookingId: incoming.id,
       before: bookingSnapshot(incoming),
       after: bookingSnapshot({ ...incoming, ...bookingChanges }),

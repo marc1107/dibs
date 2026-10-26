@@ -7,7 +7,8 @@ export const SLOT_MINUTES = 15;
 export const MAX_OCCURRENCES = 120;
 export const MAX_SPAN_DAYS = 62;
 export const MAX_NOTE_LENGTH = 200;
-export const MAX_SYNC_ACTIONS = 50;
+/** Keeps one /api/sync call well within D1's per-invocation query limit on the free plan. */
+export const MAX_SYNC_ACTIONS = 20;
 
 export const ROLES = ["admin", "member"] as const;
 export type Role = (typeof ROLES)[number];

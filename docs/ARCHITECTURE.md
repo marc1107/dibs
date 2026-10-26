@@ -145,7 +145,7 @@ REST under `/api`, JSON, session cookie. Validation schemas in `src/shared/schem
 | `GET /api/requests/:id` | member | one request with both bookings |
 | `POST /api/requests/:id/respond` | first booker, admin | `grant` / `counter` + `counterTime` / `decline` |
 | `POST /api/requests/:id/withdraw` | requester, admin | withdraw |
-| `POST /api/sync` | member | outbox batch (≤ 50 actions), one result per action |
+| `POST /api/sync` | member | outbox batch (≤ 20 actions, the app sends 10), one result per action |
 | `PUT /api/me/prefs` | member | name, start view, notification switches |
 | `POST /api/me/ical-token` | member | new iCal token (old one stops working) |
 | `POST /api/push/subscribe`, `POST /api/push/unsubscribe` | member | Web Push subscription of this device |

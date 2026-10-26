@@ -12,13 +12,13 @@ import {
   utcToLocalEnd,
   type Interval,
 } from "@shared/time";
-import { and, desc, eq, gt, gte, inArray, lt, ne, or, sql } from "drizzle-orm";
+import { and, desc, eq, gt, gte, inArray, like, lt, ne, or, sql } from "drizzle-orm";
 import { auditLog, booking, request, series, user } from "../db/schema";
 import { AppError, forbidden, notFound } from "../lib/errors";
 import { newId } from "../lib/ids";
 import { auditInsert, isAdmin, nowIso, sourceFor, type ServiceCtx } from "./context";
 import { bookingSnapshot, loadBooking, toBookingDto, toRequestDto, userNames, type BookingRow } from "./mappers";
-import { runBatch, type Statement } from "../lib/batch";
+import { guard, GuardError, runBatch, type Statement } from "../lib/batch";
 
 /** SQL fragment: another person's active booking `b` overlaps booking `n`. */
 const OTHER_ACTIVE_OVERLAP = sql.raw(
@@ -55,6 +55,35 @@ function conflictMessage(conflicts: BookingRow[], names: Map<string, string>, iv
   const who = names.get(c.ownerId) ?? "jemand anderem";
   const more = conflicts.length > 1 ? ` und ${conflicts.length - 1} weiteren` : "";
   return `Überschneidet sich mit ${who}${more} (${formatRange(c, c.allDay)}, ${overlapMinutes(c, iv)} Min.)`;
+}
+
+/** SQL condition: another person's active booking (not in `excludeIds`) overlaps one of the intervals. */
+function otherActiveOverlaps(ownerId: string, intervals: Interval[], excludeIds: string[]) {
+  return sql`EXISTS (
+    SELECT 1 FROM json_each(${JSON.stringify(intervals)}) iv, booking b
+    WHERE b.status = 'active' AND b.owner_id != ${ownerId}
+      AND b.id NOT IN (SELECT value FROM json_each(${JSON.stringify(excludeIds)}))
+      AND b.starts_at < json_extract(iv.value, '$.endsAt') AND b.ends_at > json_extract(iv.value, '$.startsAt'))`;
+}
+
+/** Runs an edit batch; if the overlap guard fired, nothing was written and the edit is a conflict. */
+async function runGuarded(ctx: ServiceCtx, statements: Statement[], ownerId: string, iv: Interval, excludeIds: string[], names?: Map<string, string>) {
+  try {
+    await runBatch(ctx.env.DB, statements);
+  } catch (err) {
+    if (!(err instanceof GuardError)) throw err;
+    const conflicts = await conflictsFor(ctx, ownerId, iv, excludeIds);
+    const message = conflicts.length > 0 ? conflictMessage(conflicts, names ?? (await userNames(ctx.db)), iv) : "Der Zeitraum wurde gerade vergeben";
+    throw new AppError("conflict", message, { conflicts: conflicts.map(toBookingDto) });
+  }
+}
+
+/** Ending at the current minute; within the first minute there is nothing left, so it counts as cancelled. */
+export function endNowChanges(b: BookingRow, now: Date, nowIsoValue: string) {
+  const endsAt = floorToSlot(now);
+  return endsAt > b.startsAt
+    ? { status: "ended_early" as const, endsAt, updatedAt: nowIsoValue }
+    : { status: "cancelled" as const, updatedAt: nowIsoValue };
 }
 
 // ---------------------------------------------------------------------------
@@ -107,7 +136,7 @@ export async function tryActivate(ctx: ServiceCtx, bookingId: string) {
   if (after && activated) {
     await auditInsert(ctx, { action: "booking.activated", bookingId, after: bookingSnapshot(after), source: sourceFor(ctx, after.ownerId) });
   }
-  if (after && created.length > 0) await notifyNewRequests(ctx, after, created);
+  if (after && created.length > 0) await notifyNewRequests(ctx, [after], created);
   return { booking: after, activated, created };
 }
 
@@ -131,15 +160,18 @@ export async function reevaluateRequestsTargeting(ctx: ServiceCtx, targetIds: st
   }
 }
 
-async function notifyNewRequests(ctx: ServiceCtx, requester: BookingRow, created: { id: string; targetBookingId: string }[]) {
+/** Push "X fragt nach dem Auto" to the first bookers; two queries regardless of the number of requests. */
+async function notifyNewRequests(ctx: ServiceCtx, requesters: BookingRow[], created: { id: string; bookingId: string; targetBookingId: string }[]) {
+  if (created.length === 0) return;
   const names = await userNames(ctx.db);
   const targets = await ctx.db
     .select()
     .from(booking)
-    .where(inArray(booking.id, created.map((r) => r.targetBookingId)));
+    .where(inArray(booking.id, [...new Set(created.map((r) => r.targetBookingId))]));
   for (const r of created) {
     const t = targets.find((x) => x.id === r.targetBookingId);
-    if (!t) continue;
+    const requester = requesters.find((x) => x.id === r.bookingId);
+    if (!t || !requester) continue;
     ctx.notifier.add([t.ownerId], "request_to_me", {
       title: `${names.get(requester.ownerId) ?? "Jemand"} fragt nach dem Auto`,
       body: `${formatRange(requester, requester.allDay)} · ${overlapMinutes(t, requester)} Min. Überschneidung mit deiner Buchung`,
@@ -158,6 +190,18 @@ export async function createBooking(ctx: ServiceCtx, input: CreateBookingInput):
   if (ownerId !== ctx.actor.id && !isAdmin(ctx)) throw forbidden("Nur der Admin kann für andere buchen");
   const owner = await ctx.db.query.user.findFirst({ where: eq(user.id, ownerId) });
   if (!owner || owner.status !== "active") throw new AppError("invalid", "Diese Person ist nicht freigeschaltet");
+
+  // Replay of a create whose stored result was lost (e.g. the Worker failed after the batch):
+  // answer with the bookings that already exist instead of failing on the unique client_id.
+  const existing = await ctx.db
+    .select()
+    .from(booking)
+    .where(or(eq(booking.clientId, input.clientId), like(booking.clientId, `${input.clientId}:%`)));
+  if (existing.length > 0) {
+    if (existing.some((b) => b.createdBy !== ctx.actor.id)) throw forbidden("Ungültige Aktions-ID");
+    const outcome = existing.some((b) => b.status === "requested") ? "requested" : "created";
+    return result(ctx, outcome, existing.map((b) => b.id));
+  }
 
   const now = nowIso(ctx);
   const source = sourceFor(ctx, ownerId);
@@ -252,11 +296,8 @@ export async function createBooking(ctx: ServiceCtx, input: CreateBookingInput):
 async function notifyCreated(ctx: ServiceCtx, created: BookingRow[], requests: (typeof request.$inferSelect)[]) {
   const first = created[0];
   if (!first) return;
+  await notifyNewRequests(ctx, created, requests);
   const names = await userNames(ctx.db);
-  for (const b of created) {
-    const own = requests.filter((r) => r.bookingId === b.id);
-    if (own.length > 0) await notifyNewRequests(ctx, b, own);
-  }
   const ownerName = names.get(first.ownerId) ?? "Jemand";
   const more = created.length > 1 ? ` (+${created.length - 1} weitere Termine)` : "";
   const verb = created.every((b) => b.status === "requested") ? "hat angefragt" : "hat reserviert";
@@ -317,6 +358,8 @@ export async function updateBooking(ctx: ServiceCtx, id: string, input: UpdateBo
   };
   const after = { ...b, ...changes };
   const statements: Statement[] = [
+    // Re-check inside the transaction: someone may have booked the slot since conflictsFor ran.
+    ...(b.status === "active" ? [guard(otherActiveOverlaps(b.ownerId, [iv], [b.id]))] : []),
     ctx.db.update(booking).set(changes).where(eq(booking.id, b.id)),
     auditInsert(ctx, { action: "booking.updated", bookingId: b.id, before: bookingSnapshot(b), after: bookingSnapshot(after), source: sourceFor(ctx, b.ownerId) }),
   ];
@@ -329,7 +372,7 @@ export async function updateBooking(ctx: ServiceCtx, id: string, input: UpdateBo
         .where(and(eq(request.bookingId, b.id), eq(request.status, "open"))),
     );
   }
-  await runBatch(ctx.env.DB, statements);
+  await runGuarded(ctx, statements, b.ownerId, iv, [b.id], names);
   if (b.status === "requested") await tryActivate(ctx, b.id);
   else await reevaluateRequestsTargeting(ctx, [b.id]);
 
@@ -383,6 +426,8 @@ async function updateFollowing(ctx: ServiceCtx, b: BookingRow, input: UpdateBook
     );
   }
   const updates = planned.map((p) => ({ id: p.row.id, s: p.iv.startsAt, e: p.iv.endsAt }));
+  const activeIntervals = planned.filter((p) => p.row.status === "active").map((p) => p.iv);
+  if (activeIntervals.length > 0) statements.unshift(guard(otherActiveOverlaps(b.ownerId, activeIntervals, ids)));
   statements.push(
     sql`
       UPDATE booking SET
@@ -405,7 +450,7 @@ async function updateFollowing(ctx: ServiceCtx, b: BookingRow, input: UpdateBook
       }),
     ),
   );
-  await runBatch(ctx.env.DB, statements);
+  await runGuarded(ctx, statements, b.ownerId, planned[0]!.iv, ids);
   for (const p of planned) if (p.row.status === "requested") await tryActivate(ctx, p.row.id);
   await reevaluateRequestsTargeting(ctx, planned.filter((p) => p.row.status === "active").map((p) => p.row.id));
 
@@ -458,7 +503,6 @@ export async function cancelBooking(ctx: ServiceCtx, id: string, input: CancelBo
     return result(ctx, "ignored", [b.id], "Diese Buchung ist bereits beendet oder storniert.");
   }
   const now = nowIso(ctx);
-  const nowRounded = floorToSlot(ctx.now);
   const targets = input.scope === "following" && b.seriesId ? await followingOccurrences(ctx, b) : [b];
   const source = sourceFor(ctx, b.ownerId);
 
@@ -469,13 +513,11 @@ export async function cancelBooking(ctx: ServiceCtx, id: string, input: CancelBo
   for (const t of targets) {
     if (t.endsAt <= now) continue;
     const running = t.status === "active" && t.startsAt <= now;
-    const changes = running
-      ? { status: "ended_early" as const, endsAt: nowRounded, updatedAt: now }
-      : { status: "cancelled" as const, updatedAt: now };
+    const changes = running ? endNowChanges(t, ctx.now, now) : { status: "cancelled" as const, updatedAt: now };
     statements.push(
       ctx.db.update(booking).set(changes).where(eq(booking.id, t.id)),
       auditInsert(ctx, {
-        action: running ? "booking.ended_early" : "booking.cancelled",
+        action: changes.status === "ended_early" ? "booking.ended_early" : "booking.cancelled",
         bookingId: t.id,
         before: bookingSnapshot(t),
         after: bookingSnapshot({ ...t, ...changes }),
@@ -487,7 +529,7 @@ export async function cancelBooking(ctx: ServiceCtx, id: string, input: CancelBo
         .where(and(eq(request.bookingId, t.id), inArray(request.status, ["open", "partial"]))),
     );
     if (t.status === "active") freed.push(t.id);
-    if (running) endedEarly++;
+    if (changes.status === "ended_early") endedEarly++;
     else cancelled++;
   }
   if (statements.length === 0) {
@@ -520,11 +562,11 @@ export async function endNow(ctx: ServiceCtx, id: string): Promise<MutationResul
   if (b.endsAt <= now) throw new AppError("already_over", "Diese Buchung ist schon vorbei");
   if (b.startsAt > now) throw new AppError("not_started", "Die Buchung hat noch nicht begonnen – storniere sie stattdessen");
 
-  const changes = { status: "ended_early" as const, endsAt: floorToSlot(ctx.now), updatedAt: now };
+  const changes = endNowChanges(b, ctx.now, now);
   await runBatch(ctx.env.DB, [
     ctx.db.update(booking).set(changes).where(eq(booking.id, b.id)),
     auditInsert(ctx, {
-      action: "booking.ended_early",
+      action: changes.status === "ended_early" ? "booking.ended_early" : "booking.cancelled",
       bookingId: b.id,
       before: bookingSnapshot(b),
       after: bookingSnapshot({ ...b, ...changes }),
@@ -532,8 +574,8 @@ export async function endNow(ctx: ServiceCtx, id: string): Promise<MutationResul
     }),
   ]);
   await reevaluateRequestsTargeting(ctx, [b.id]);
-  notifyOwnerIfForeign(ctx, b, "hat deine Buchung beendet", `Frei ab ${utcToLocal(changes.endsAt).time}`);
-  return result(ctx, "ended_early", [b.id]);
+  notifyOwnerIfForeign(ctx, b, "hat deine Buchung beendet", `Frei ab ${utcToLocal(ctx.now.toISOString()).time}`);
+  return result(ctx, changes.status === "ended_early" ? "ended_early" : "cancelled", [b.id]);
 }
 
 // ---------------------------------------------------------------------------

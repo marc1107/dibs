@@ -13,6 +13,8 @@ export interface OutboxEntry {
   createdAt: string;
   /** Human-readable summary for "1 Buchung noch nicht gesendet". */
   label: string;
+  /** Server errors (5xx) so far; after a few the action is dropped so it cannot block the queue. */
+  failures?: number;
 }
 
 export const pendingId = (clientId: string, index: number) => `pending:${clientId}:${index}`;

@@ -14,6 +14,10 @@ import { createStore } from "./store";
  */
 const idb = typeof indexedDB === "undefined" ? undefined : createIdbStore("schluesselbrett-outbox", "entries");
 
+/** Actions per /api/sync call; small so one call stays cheap for D1. */
+const SYNC_BATCH = 10;
+const MAX_FAILURES = 3;
+
 export const outbox = createStore<OutboxEntry[]>([]);
 export const syncing = createStore(false);
 /** Last send attempt could not reach the server (navigator.onLine can be true while the server is unreachable). */
@@ -77,7 +81,7 @@ async function send() {
   syncing.set(true);
   try {
     while (outbox.get().length > 0) {
-      const batch = outbox.get().slice(0, 50);
+      const batch = outbox.get().slice(0, SYNC_BATCH);
       let response: SyncResponse;
       try {
         response = await api<SyncResponse>("/api/sync", {
@@ -93,6 +97,8 @@ async function send() {
           // A malformed action would block the queue forever: drop it and tell the user.
           for (const e of batch) await discard(e.clientId);
           notify({ tone: "error", title: "Aktion verworfen", body: err.message });
+        } else if (err instanceof ApiError && err.status >= 500) {
+          await countFailure(batch[0]!);
         }
         return;
       }
@@ -107,6 +113,22 @@ async function send() {
   } finally {
     syncing.set(false);
   }
+}
+
+/**
+ * The first action of a failing batch is retried a few times, then dropped with a visible
+ * message, so a single broken action can never block everything queued after it.
+ */
+async function countFailure(entry: OutboxEntry) {
+  const failures = (entry.failures ?? 0) + 1;
+  if (failures >= MAX_FAILURES) {
+    await discard(entry.clientId);
+    notify({ tone: "error", title: "Nicht gesendet", body: `${entry.label} konnte nach mehreren Versuchen nicht gespeichert werden. Bitte erneut eintragen.` });
+    return;
+  }
+  const updated = { ...entry, failures };
+  if (idb) await set(entry.clientId, updated, idb);
+  outbox.set((list) => list.map((x) => (x.clientId === entry.clientId ? updated : x)));
 }
 
 async function markOffline(batch: OutboxEntry[]) {
