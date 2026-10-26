@@ -102,21 +102,27 @@ async function send() {
         return;
       }
       unreachable.set(false);
+      const before = outbox.get().length;
       for (const result of response.results) {
         const entry = batch.find((e) => e.clientId === result.clientId);
         if (!entry) continue;
         if (!result.ok && result.error === "server") {
           // The server stopped at this action; the ones after it were not processed.
-          await countFailure(entry);
-          retryAt = Date.now() + 15_000 * (entry.failures ?? 1);
+          const failures = await countFailure(entry);
+          retryAt = Date.now() + 15_000 * failures;
           hooks.onSynced();
           return;
         }
         report(entry, result);
         await discard(entry.clientId);
       }
-      retryAt = 0;
       hooks.onSynced();
+      if (outbox.get().length === before) {
+        // No result matched a queued action: back off instead of resending the same batch at once.
+        retryAt = Date.now() + 30_000;
+        return;
+      }
+      retryAt = 0;
     }
   } finally {
     syncing.set(false);
@@ -127,16 +133,17 @@ async function send() {
  * The action the server could not store is retried with growing delay, then dropped with a
  * visible message, so a single broken action can never block everything queued after it.
  */
-async function countFailure(entry: OutboxEntry) {
+async function countFailure(entry: OutboxEntry): Promise<number> {
   const failures = (entry.failures ?? 0) + 1;
   if (failures >= MAX_FAILURES) {
     await discard(entry.clientId);
     notify({ tone: "error", title: "Nicht gesendet", body: `${entry.label} konnte nach mehreren Versuchen nicht gespeichert werden. Bitte erneut eintragen.` });
-    return;
+    return failures;
   }
   const updated = { ...entry, failures };
   if (idb) await set(entry.clientId, updated, idb);
   outbox.set((list) => list.map((x) => (x.clientId === entry.clientId ? updated : x)));
+  return failures;
 }
 
 async function markOffline(batch: OutboxEntry[]) {
