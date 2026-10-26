@@ -98,6 +98,7 @@ Requests never expire. Withdrawing cancels the requesting booking (or ends it ea
 - Every booking mutation (create, edit, cancel, end now) goes through the **outbox**: stored in IndexedDB, applied locally at once (`applyOutbox`, marked "wird gesendet"), then sent in order via `POST /api/sync`. Each action carries a client UUID; the server stores the result per UUID, so resending never creates duplicates.
 - Sending happens on start, when the app comes to the foreground, when the browser reports `online`, every 30 s while something is queued, and via the "Senden" button. Safari has no Background Sync, so the banner "1 Buchung noch nicht gesendet" stays visible until it is sent.
 - Conflicts follow the server: a queued booking whose slot is taken becomes a normal request; an edit of a booking that changed in the meantime (`baseUpdatedAt` mismatch) is rejected as `stale` and the app shows before/after with "Erneut bearbeiten"; cancelling something that is already over is ignored and reported.
+- Each action gets its own result. A malformed action is rejected alone (`invalid`); an unexpected server error stops the batch at that action (`server`, nothing of it stored) and the app retries it with growing delay, dropping it with a message after three failures.
 - Answering requests and admin actions need a connection (they are disabled offline).
 
 ## Notifications

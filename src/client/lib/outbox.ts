@@ -67,10 +67,14 @@ export async function clearOutbox() {
 }
 
 let inFlight: Promise<void> | null = null;
+/** No automatic attempt before this time (backoff after server errors). */
+let retryAt = 0;
 
-export function flush(): Promise<void> {
+/** Sends queued actions. `force` (the "Senden" button) ignores the backoff. */
+export function flush(options: { force?: boolean } = {}): Promise<void> {
   if (inFlight) return inFlight;
   if (outbox.get().length === 0 || !navigator.onLine) return Promise.resolve();
+  if (!options.force && Date.now() < retryAt) return Promise.resolve();
   inFlight = send().finally(() => {
     inFlight = null;
   });
@@ -89,25 +93,29 @@ async function send() {
           json: { actions: batch.map((e) => ({ ...e.action, queuedOffline: e.queuedOffline })) },
         });
       } catch (err) {
+        // The request as a whole failed (network, outage): nothing is attributed to an action.
         if (err instanceof NetworkError) {
           unreachable.set(true);
           await markOffline(batch);
         }
-        else if (err instanceof ApiError && err.status === 400) {
-          // A malformed action would block the queue forever: drop it and tell the user.
-          for (const e of batch) await discard(e.clientId);
-          notify({ tone: "error", title: "Aktion verworfen", body: err.message });
-        } else if (err instanceof ApiError && err.status >= 500) {
-          await countFailure(batch[0]!);
-        }
+        retryAt = Date.now() + (err instanceof ApiError && err.status >= 500 ? 30_000 : 5_000);
         return;
       }
       unreachable.set(false);
       for (const result of response.results) {
         const entry = batch.find((e) => e.clientId === result.clientId);
-        if (entry) report(entry, result);
-        await discard(result.clientId);
+        if (!entry) continue;
+        if (!result.ok && result.error === "server") {
+          // The server stopped at this action; the ones after it were not processed.
+          await countFailure(entry);
+          retryAt = Date.now() + 15_000 * (entry.failures ?? 1);
+          hooks.onSynced();
+          return;
+        }
+        report(entry, result);
+        await discard(entry.clientId);
       }
+      retryAt = 0;
       hooks.onSynced();
     }
   } finally {
@@ -116,8 +124,8 @@ async function send() {
 }
 
 /**
- * The first action of a failing batch is retried a few times, then dropped with a visible
- * message, so a single broken action can never block everything queued after it.
+ * The action the server could not store is retried with growing delay, then dropped with a
+ * visible message, so a single broken action can never block everything queued after it.
  */
 async function countFailure(entry: OutboxEntry) {
   const failures = (entry.failures ?? 0) + 1;

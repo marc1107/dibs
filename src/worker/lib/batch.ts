@@ -5,7 +5,8 @@ import { SQLiteAsyncDialect } from "drizzle-orm/sqlite-core";
 export type Statement = SQL | { toSQL(): { sql: string; params: unknown[] } };
 
 const dialect = new SQLiteAsyncDialect();
-const GUARD_FAILED = "malformed JSON";
+/** Only guard() can produce this error message ("bad JSON path: '<marker>'"). */
+const GUARD_MARKER = "schluesselbrett_guard_violated";
 
 /** Raised when a `guard` statement inside a batch found its condition violated; nothing was written. */
 export class GuardError extends Error {}
@@ -17,10 +18,10 @@ function toQuery(statement: Statement) {
 /**
  * A statement that aborts the whole batch (rolling back every statement in it) when
  * `violated` is true. D1 has no interactive transactions, so checks that must hold at
- * write time are expressed this way. It works by forcing a JSON parse error.
+ * write time are expressed this way. It forces an SQLite error with a unique marker.
  */
 export function guard(violated: SQL): SQL {
-  return sql`SELECT json(CASE WHEN ${violated} THEN 'guard violated' ELSE '{}' END)`;
+  return sql`SELECT CASE WHEN ${violated} THEN json_extract('{}', ${sql.raw(`'${GUARD_MARKER}'`)}) END`;
 }
 
 /**
@@ -37,7 +38,7 @@ export async function runBatch(d1: D1Database, statements: Statement[]): Promise
       }),
     );
   } catch (err) {
-    if (err instanceof Error && err.message.includes(GUARD_FAILED)) throw new GuardError(err.message);
+    if (err instanceof Error && err.message.includes(GUARD_MARKER)) throw new GuardError(err.message);
     throw err;
   }
 }

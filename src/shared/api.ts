@@ -116,7 +116,8 @@ export type MutationResult =
     }
   | {
       ok: false;
-      error: "conflict" | "stale" | "forbidden" | "not_found" | "invalid" | "already_over" | "not_started";
+      /** "server": unexpected failure of this action; nothing of it was stored, it can be retried. */
+      error: "conflict" | "stale" | "forbidden" | "not_found" | "invalid" | "already_over" | "not_started" | "server";
       message: string;
       /** Server state of the booking (for "stale"), shown as before/after to the user. */
       server?: BookingDto;

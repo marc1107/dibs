@@ -58,7 +58,7 @@ function conflictMessage(conflicts: BookingRow[], names: Map<string, string>, iv
 }
 
 /** SQL condition: another person's active booking (not in `excludeIds`) overlaps one of the intervals. */
-function otherActiveOverlaps(ownerId: string, intervals: Interval[], excludeIds: string[]) {
+export function otherActiveOverlaps(ownerId: string, intervals: Interval[], excludeIds: string[]) {
   return sql`EXISTS (
     SELECT 1 FROM json_each(${JSON.stringify(intervals)}) iv, booking b
     WHERE b.status = 'active' AND b.owner_id != ${ownerId}

@@ -3,7 +3,6 @@ import {
   MAX_NOTE_LENGTH,
   MAX_OCCURRENCES,
   MAX_SPAN_DAYS,
-  MAX_SYNC_ACTIONS,
   NOTIFICATION_TYPES,
   REPEATS,
   START_VIEWS,
@@ -125,7 +124,6 @@ export const syncActionSchema = z.discriminatedUnion("type", [
 export type SyncAction = z.infer<typeof syncActionSchema>;
 export type SyncActionInput = z.input<typeof syncActionSchema>;
 
-export const syncSchema = z.object({ actions: z.array(syncActionSchema).min(1).max(MAX_SYNC_ACTIONS) });
 
 export const prefsSchema = z.object({
   name: z.string().trim().min(1).max(30).optional(),

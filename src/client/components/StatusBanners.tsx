@@ -25,7 +25,7 @@ export function OutboxBanner() {
                 : "Wird gleich gesendet"}</span>
       </span>
       {online && !busy && (
-        <Button size="sm" variant="outline" onClick={() => void flush()}>
+        <Button size="sm" variant="outline" onClick={() => void flush({ force: true })}>
           Senden
         </Button>
       )}
