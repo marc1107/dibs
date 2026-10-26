@@ -15,7 +15,7 @@ Everything that can be done without your accounts is done. This page lists the r
 | `wrangler.jsonc` → `env.preview.vars.APP_URL` | `REPLACE_WITH_WORKERS_SUBDOMAIN` | your `*.workers.dev` subdomain (Cloudflare dashboard → Workers) |
 | Worker secrets (`wrangler secret put`) | – | `BETTER_AUTH_SECRET`, `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET`, `VAPID_PRIVATE_KEY`, `TURNSTILE_SECRET_KEY`, `ADMIN_EMAIL` |
 | GitHub → Settings → Secrets → Actions | – | `CLOUDFLARE_API_TOKEN`, `CLOUDFLARE_ACCOUNT_ID`, `ANTHROPIC_API_KEY` *or* `CLAUDE_CODE_OAUTH_TOKEN`, optional `SECURITY_ALERTS_TOKEN` |
-| GitHub → Settings → Variables → Actions | – | `APP_URL` = `https://auto.example.com` (smoke test) |
+| GitHub → Settings → Variables → Actions | – | `APP_URL` = `https://auto.example.com` (smoke test), `CLOUDFLARE_CONFIGURED` = `true` (enables `deploy` and `preview`; until then both are skipped) |
 
 All values in `wrangler.jsonc` are public (the repository is public). Everything secret goes into Worker secrets or GitHub secrets only. `grep -rn REPLACE_ wrangler.jsonc` shows what is still open.
 
@@ -64,7 +64,7 @@ Public key → `VAPID_PUBLIC_KEY` in `wrangler.jsonc` (production and preview). 
 
 ## 7. GitHub
 
-1. Secrets and variable from the table above. For `security-fix.yml` either an Anthropic API key (`ANTHROPIC_API_KEY`) or a Claude subscription token (`CLAUDE_CODE_OAUTH_TOKEN`, created with `claude setup-token`). Optional `SECURITY_ALERTS_TOKEN`: a fine-grained PAT for this repository with *Dependabot alerts: read* (the default `GITHUB_TOKEN` cannot read Dependabot alerts; without it the workflow uses CodeQL alerts and `pnpm audit`).
+1. Secrets and variables from the table above. Set `CLOUDFLARE_CONFIGURED=true` only after steps 1–6, otherwise deploys fail. For `security-fix.yml` either an Anthropic API key (`ANTHROPIC_API_KEY`) or a Claude subscription token (`CLAUDE_CODE_OAUTH_TOKEN`, created with `claude setup-token`). Optional `SECURITY_ALERTS_TOKEN`: a fine-grained PAT for this repository with *Dependabot alerts: read* (the default `GITHUB_TOKEN` cannot read Dependabot alerts; without it the workflow uses CodeQL alerts and `pnpm audit`).
 2. Install the Claude GitHub App on the repository (`/install-github-app` in Claude Code). PRs opened with the default `GITHUB_TOKEN` would not trigger CI, the app avoids that.
 3. Create the environment **production** (Settings → Environments), optionally with yourself as required reviewer if you want to approve each deploy.
 4. After this first PR is merged (so the check names `ci` and `codeql` exist), run:

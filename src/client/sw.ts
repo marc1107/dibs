@@ -11,6 +11,8 @@ cleanupOutdatedCaches();
 registerRoute(new NavigationRoute(createHandlerBoundToURL("/index.html"), { denylist: [/^\/api\//, /^\/ical\//] }));
 
 self.addEventListener("message", (event) => {
+  // Only our own pages may activate a waiting update.
+  if (event.origin !== self.location.origin) return;
   if (event.data?.type === "SKIP_WAITING") void self.skipWaiting();
 });
 clientsClaim();
