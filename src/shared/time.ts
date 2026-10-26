@@ -145,8 +145,12 @@ export function formatRange(interval: Interval, allDay: boolean): string {
   return `${formatDay(s.date)} ${s.time} – ${formatDay(e.date)} ${e.time}`;
 }
 
-/** "30 Min.", "2 Std.", "1 Std. 30 Min." */
+/** "30 Min.", "2 Std.", "1 Std. 30 Min.", whole days as "1 Tag" / "3 Tage". */
 export function formatDuration(minutes: number): string {
+  if (minutes >= 1440 && minutes % 1440 === 0) {
+    const d = minutes / 1440;
+    return d === 1 ? "1 Tag" : `${d} Tage`;
+  }
   const h = Math.floor(minutes / 60);
   const m = minutes % 60;
   if (h === 0) return `${m} Min.`;

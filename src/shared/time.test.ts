@@ -96,5 +96,7 @@ describe("formatting", () => {
     expect(formatRange(toInterval({ startDate: "2026-10-24", endDate: "2026-10-26", allDay: true }), true)).toBe("Sa 24. – Mo 26. Okt");
     expect(formatDuration(30)).toBe("30 Min.");
     expect(formatDuration(90)).toBe("1 Std. 30 Min.");
+    expect(formatDuration(1440)).toBe("1 Tag");
+    expect(formatDuration(2880)).toBe("2 Tage");
   });
 });
