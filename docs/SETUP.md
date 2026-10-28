@@ -37,8 +37,8 @@ The script creates the D1 databases `schluesselbrett` and `schluesselbrett-previ
 
 ## 3. Google OAuth client
 
-1. <https://console.cloud.google.com/> → new project "Schlüsselbrett".
-2. *APIs & Services → OAuth consent screen*: External, app name "Auto-Kalender", your e-mail. Keep the publishing status **Testing** and add the three Google accounts as **test users** (only they can sign in, which is exactly what we want).
+1. <https://console.cloud.google.com/> → new project "dibs".
+2. *APIs & Services → OAuth consent screen*: External, app name "dibs", your e-mail. Keep the publishing status **Testing** and add the three Google accounts as **test users** (only they can sign in, which is exactly what we want).
 3. *Credentials → Create credentials → OAuth client ID → Web application*:
    - Authorized JavaScript origins: `https://auto.example.com`
    - Authorized redirect URIs: `https://auto.example.com/api/auth/callback/google`

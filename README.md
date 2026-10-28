@@ -1,4 +1,4 @@
-# Schlüsselbrett
+# dibs
 
 A small PWA for a shared car: three people (an admin and two members) reserve the car with two taps and always see who has it when. Runs entirely on the Cloudflare free plan.
 
