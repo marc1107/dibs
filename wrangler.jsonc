@@ -1,5 +1,5 @@
-// Cloudflare Worker configuration. Values marked with "REPLACE_" are placeholders,
-// see docs/SETUP.md for what to fill in. Secrets never go into this file (the repo is public):
+// Cloudflare Worker configuration for dibs.bohner.cloud; docs/SETUP.md explains where each
+// value comes from. Secrets never go into this file (the repo is public):
 // BETTER_AUTH_SECRET, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, VAPID_PRIVATE_KEY,
 // TURNSTILE_SECRET_KEY and ADMIN_EMAIL are set with `wrangler secret put`.
 {
@@ -17,27 +17,25 @@
     "run_worker_first": ["/api/*", "/ical/*"]
   },
 
-  // REPLACE_: your (sub)domain, e.g. "auto.example.com". The zone must be on Cloudflare DNS.
-  "routes": [{ "pattern": "REPLACE_WITH_YOUR_DOMAIN", "custom_domain": true }],
+  "routes": [{ "pattern": "dibs.bohner.cloud", "custom_domain": true }],
   "workers_dev": false,
 
   "vars": {
     // Public base URL of the app (OAuth callback, passkey RP ID, iCal links).
-    "APP_URL": "https://REPLACE_WITH_YOUR_DOMAIN",
+    "APP_URL": "https://dibs.bohner.cloud",
     // Cloudflare Turnstile site key (public). Create a widget in the Cloudflare dashboard.
-    "TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY",
+    "TURNSTILE_SITE_KEY": "0x4AAAAAAFpu8GIm7xAHo8mK",
     // Public VAPID key from `pnpm vapid`.
-    "VAPID_PUBLIC_KEY": "REPLACE_WITH_VAPID_PUBLIC_KEY",
+    "VAPID_PUBLIC_KEY": "BJmixzMloLNlKxiIBVr-iQSOaK1wrIE1m8bSPRxrgKn2xSGsPcSpCWCWh6Ld8ivxhUsYUhrREzdsi25ihV61TVE",
     // Contact for push services (a mailto: or https: URL).
-    "VAPID_SUBJECT": "https://REPLACE_WITH_YOUR_DOMAIN"
+    "VAPID_SUBJECT": "https://dibs.bohner.cloud"
   },
 
   "d1_databases": [
     {
       "binding": "DB",
       "database_name": "schluesselbrett",
-      // REPLACE_: output of `wrangler d1 create schluesselbrett`.
-      "database_id": "REPLACE_WITH_D1_DATABASE_ID",
+      "database_id": "0fe799cc-0586-4ebe-938c-0fd7abd6043b",
       "migrations_dir": "migrations"
     }
   ],
@@ -64,17 +62,16 @@
       "workers_dev": true,
       "routes": [],
       "vars": {
-        "APP_URL": "https://schluesselbrett-preview.REPLACE_WITH_WORKERS_SUBDOMAIN.workers.dev",
-        "TURNSTILE_SITE_KEY": "REPLACE_WITH_TURNSTILE_SITE_KEY",
-        "VAPID_PUBLIC_KEY": "REPLACE_WITH_VAPID_PUBLIC_KEY",
-        "VAPID_SUBJECT": "https://REPLACE_WITH_YOUR_DOMAIN"
+        "APP_URL": "https://schluesselbrett-preview.m-bohner99.workers.dev",
+        "TURNSTILE_SITE_KEY": "0x4AAAAAAFpu8GIm7xAHo8mK",
+        "VAPID_PUBLIC_KEY": "BJmixzMloLNlKxiIBVr-iQSOaK1wrIE1m8bSPRxrgKn2xSGsPcSpCWCWh6Ld8ivxhUsYUhrREzdsi25ihV61TVE",
+        "VAPID_SUBJECT": "https://dibs.bohner.cloud"
       },
       "d1_databases": [
         {
           "binding": "DB",
           "database_name": "schluesselbrett-preview",
-          // REPLACE_: output of `wrangler d1 create schluesselbrett-preview`.
-          "database_id": "REPLACE_WITH_PREVIEW_D1_DATABASE_ID",
+          "database_id": "5eb061f7-3eaf-40d6-a2d3-c2c366686e0e",
           "migrations_dir": "migrations"
         }
       ],
