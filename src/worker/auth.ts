@@ -1,3 +1,4 @@
+import { firstName } from "@shared/names";
 import { passkey } from "@better-auth/passkey";
 import { betterAuth } from "better-auth";
 import { drizzleAdapter } from "better-auth/adapters/drizzle";
@@ -60,6 +61,8 @@ export function createAuth(env: Env, db: Db, notifier?: Notifier) {
             return {
               data: {
                 ...newUser,
+                // Google sends the full name; dibs only ever shows first names.
+                name: firstName(newUser.name),
                 role: isAdmin ? "admin" : "member",
                 status: isAdmin ? "active" : "pending",
                 color: await nextFreeColor(db),
