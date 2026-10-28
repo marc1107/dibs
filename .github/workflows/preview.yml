@@ -36,6 +36,9 @@ jobs:
       - run: pnpm build
       - name: Apply migrations to the preview database
         run: pnpm exec wrangler d1 migrations apply DB --remote --env preview
+      # `versions upload` needs an existing Worker; the first preview run creates it.
+      - name: Ensure the preview Worker exists
+        run: pnpm exec wrangler deployments list >/dev/null 2>&1 || pnpm exec wrangler deploy
       - name: Upload preview version
         id: upload
         run: |
