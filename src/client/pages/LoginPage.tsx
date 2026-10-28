@@ -2,7 +2,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { useEffect, useRef, useState } from "react";
 import { useSearchParams } from "react-router";
 import { InstallHint } from "../components/StatusBanners";
-import { Button, CarIcon } from "../components/ui";
+import { Button, AppIcon } from "../components/ui";
 import { api, errorMessage } from "../lib/api";
 import { authClient } from "../lib/auth-client";
 import { keys } from "../lib/queries";
@@ -86,11 +86,11 @@ export function LoginPage() {
   };
 
   return (
-    <div className="mx-auto flex min-h-dvh max-w-md flex-col items-center gap-4 px-6 pb-12 pt-[max(env(safe-area-inset-top),20px)]">
-      <div className="mt-24 flex size-[84px] items-center justify-center rounded-[22px] bg-ink">
-        <CarIcon />
+    <div className="mx-auto flex min-h-full max-w-md flex-col items-center gap-4 px-6 pb-12 pt-[max(env(safe-area-inset-top),20px)]">
+      <div className="mt-24">
+        <AppIcon />
       </div>
-      <h1 className="mt-2 text-[28px] font-bold">dibs</h1>
+      <h1 className="mt-2 font-rounded text-[32px] font-extrabold tracking-[-0.5px]">dibs</h1>
       <p className="mb-5 text-center text-base text-muted">Wer hat wann das Auto?</p>
       <div className="flex w-full flex-col gap-3">
         <Button variant="outline" size="lg" disabled={busy || !token} onClick={() => void google()}>
@@ -99,7 +99,7 @@ export function LoginPage() {
           </span>
           {token ? "Mit Google fortfahren" : "Sicherheitsprüfung …"}
         </Button>
-        <Button variant="dark" size="lg" disabled={busy} onClick={() => void passkey()}>
+        <Button variant="strong" size="lg" disabled={busy} onClick={() => void passkey()}>
           <KeyIcon />
           Mit Passkey (Face ID)
         </Button>

@@ -10,10 +10,17 @@ import { notify } from "../lib/notices";
 import { isIos, isStandalone, useOnline } from "../lib/platform";
 import { currentSubscription, enablePush, pushSupported } from "../lib/push";
 import { keys, useMe } from "../lib/queries";
+import { useStore } from "../lib/store";
+import { setThemePref, themePref, type ThemePref } from "../lib/theme";
 import { signOut } from "../lib/session";
 import { addPasskey, usePasskeys } from "./Onboarding";
 
 const VIEW_LABELS: Record<StartView, string> = { month: "Monat", week: "Woche", list: "Liste" };
+const THEME_OPTIONS: { value: ThemePref; label: string }[] = [
+  { value: "system", label: "System" },
+  { value: "light", label: "Hell" },
+  { value: "dark", label: "Dunkel" },
+];
 
 export function SettingsPage() {
   const me = useMe().data!;
@@ -23,6 +30,7 @@ export function SettingsPage() {
   const [name, setName] = useState(me.user.name);
   const [ownOnly, setOwnOnly] = useState(false);
   const [pushOn, setPushOn] = useState<boolean | null>(null);
+  const theme = useStore(themePref);
 
   useEffect(() => {
     void currentSubscription().then((s) => setPushOn(Boolean(s)));
@@ -55,7 +63,7 @@ export function SettingsPage() {
           onChange={(e) => setName(e.target.value)}
           className="h-11 min-w-0 flex-1 bg-transparent text-[16px]"
         />
-        <Button size="sm" variant="dark" disabled={!online || !name.trim() || name.trim() === me.user.name} onClick={() => prefs.mutate({ name: name.trim() })}>
+        <Button size="sm" variant="strong" disabled={!online || !name.trim() || name.trim() === me.user.name} onClick={() => prefs.mutate({ name: name.trim() })}>
           Speichern
         </Button>
       </Card>
@@ -63,11 +71,14 @@ export function SettingsPage() {
       <SectionLabel>Startansicht</SectionLabel>
       <Segmented
         label="Startansicht"
-        className="bg-[#E6E8EC]"
+        className="bg-fill-strong"
         value={me.user.startView}
         onChange={(v) => prefs.mutate({ startView: v })}
         options={START_VIEWS.map((v) => ({ value: v, label: VIEW_LABELS[v] }))}
       />
+
+      <SectionLabel>Darstellung</SectionLabel>
+      <Segmented label="Darstellung" className="bg-fill-strong" value={theme} onChange={setThemePref} options={THEME_OPTIONS} />
 
       <SectionLabel>Mitteilungen</SectionLabel>
       <Card>
@@ -79,7 +90,7 @@ export function SettingsPage() {
             {pushPossible && (
               <Button
                 size="sm"
-                variant="dark"
+                variant="strong"
                 onClick={() =>
                   void enablePush(me.vapidPublicKey!)
                     .then(() => setPushOn(true))
@@ -108,7 +119,7 @@ export function SettingsPage() {
         <div className="grid grid-cols-2 gap-2">
           <a
             href={feed ?? undefined}
-            className="flex h-11 items-center justify-center rounded-xl bg-ink text-[15px] font-semibold text-white"
+            className="flex h-11 items-center justify-center rounded-xl bg-inverse text-[15px] font-semibold text-on-inverse pressable"
             aria-disabled={!feed}
           >
             Abonnieren

@@ -1,23 +1,40 @@
+import { AnimatePresence, motion } from "motion/react";
 import { Link } from "react-router";
 import { dismiss, notices } from "../lib/notices";
 import { useStore } from "../lib/store";
+import { EASE_OUT } from "../lib/motion";
 import { cx } from "./ui";
 
 const TONES = {
-  info: "bg-ink text-white",
+  info: "bg-inverse text-on-inverse",
   success: "bg-ok text-white",
-  warning: "bg-warn-bg text-warn-ink border border-[#f3d3a8]",
-  error: "bg-danger-soft text-danger border border-[#f4c7c3]",
+  warning: "bg-warn-bg text-warn-ink border border-warn-line backdrop-blur-xl",
+  error: "bg-danger-soft text-danger border border-danger-line backdrop-blur-xl",
 };
 
-/** Toasts for sync results and errors (top of the screen, below the status bar). */
+/** Toasts for sync results and errors: drop in from the top, swipe up (or ×) to dismiss. */
 export function Notices() {
   const list = useStore(notices);
-  if (list.length === 0) return null;
   return (
     <div className="pointer-events-none fixed inset-x-0 top-0 z-50 mx-auto flex max-w-xl flex-col gap-2 px-3 pt-safe" aria-live="polite">
+      <AnimatePresence initial={false}>
       {list.map((n) => (
-        <div key={n.id} role="status" className={cx("pointer-events-auto flex flex-col gap-1.5 rounded-2xl p-3.5 shadow-lg", TONES[n.tone])}>
+        <motion.div
+          key={n.id}
+          role="status"
+          layout
+          initial={{ opacity: 0, y: -24, scale: 0.96 }}
+          animate={{ opacity: 1, y: 0, scale: 1 }}
+          exit={{ opacity: 0, y: -24, scale: 0.96 }}
+          transition={EASE_OUT}
+          drag="y"
+          dragConstraints={{ top: 0, bottom: 0 }}
+          dragElastic={{ top: 0.8, bottom: 0.1 }}
+          onDragEnd={(_, info) => {
+            if (info.offset.y < -30 || info.velocity.y < -300) dismiss(n.id);
+          }}
+          className={cx("pointer-events-auto flex touch-none flex-col gap-1.5 rounded-2xl p-3.5 shadow-float", TONES[n.tone])}
+        >
           <div className="flex items-start justify-between gap-3">
             <span className="text-[15px] font-semibold">{n.title}</span>
             <button type="button" aria-label="Hinweis schließen" onClick={() => dismiss(n.id)} className="-m-2 p-2 text-[18px] leading-none opacity-70">
@@ -38,8 +55,9 @@ export function Notices() {
               {n.link.label}
             </Link>
           )}
-        </div>
+        </motion.div>
       ))}
+      </AnimatePresence>
     </div>
   );
 }

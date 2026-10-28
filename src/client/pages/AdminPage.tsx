@@ -50,7 +50,7 @@ export function AdminPage() {
             <Button size="sm" disabled={busy} onClick={() => act.mutate({ id: u.id, action: "reject" })}>
               Ablehnen
             </Button>
-            <Button size="sm" variant="dark" disabled={busy} onClick={() => act.mutate({ id: u.id, action: "approve" })}>
+            <Button size="sm" variant="strong" disabled={busy} onClick={() => act.mutate({ id: u.id, action: "approve" })}>
               Freischalten
             </Button>
           </div>

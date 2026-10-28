@@ -62,7 +62,7 @@ export function Onboarding() {
       {needPasskey && (
         <div className="flex items-center gap-3">
           <span className="flex-1 text-[14px] text-muted">Mit Face ID anmelden statt jedes Mal über Google.</span>
-          <Button variant="dark" size="sm" onClick={() => void addPasskey().then((ok) => { if (ok) void passkeys.refetch(); })}>
+          <Button variant="strong" size="sm" onClick={() => void addPasskey().then((ok) => { if (ok) void passkeys.refetch(); })}>
             Face ID einrichten
           </Button>
         </div>
@@ -71,7 +71,7 @@ export function Onboarding() {
         <div className="flex items-center gap-3">
           <span className="flex-1 text-[14px] text-muted">Mitteilungen bei Anfragen und neuen Buchungen.</span>
           <Button
-            variant="dark"
+            variant="strong"
             size="sm"
             onClick={() =>
               void enablePush(me.vapidPublicKey!)

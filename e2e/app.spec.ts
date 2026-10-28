@@ -53,7 +53,7 @@ test("turns an overlap into a request that the first booker can grant", async ({
   await sheet.getByLabel("Bis").selectOption("23:00");
   await expect(sheet.getByText("Überschneidet sich mit Tim")).toBeVisible();
   await sheet.getByRole("button", { name: "Tim fragen" }).click();
-  await expect(lena.page.getByText("Wird zur Anfrage")).toBeVisible();
+  await expect(lena.page.getByRole("status").filter({ hasText: "Wird zur Anfrage" })).toBeVisible();
 
   await tim.page.goto("/");
   await tim.page.getByText("1 Anfrage wartet auf deine Antwort").click();

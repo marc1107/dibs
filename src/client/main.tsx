@@ -9,6 +9,7 @@ import "./index.css";
 import { configureOutbox, flush, loadOutbox, startAutoFlush } from "./lib/outbox";
 import { CACHE_TIME, cachedOwnerName, invalidateData, queryClient } from "./lib/queries";
 import { startServiceWorker } from "./lib/sw";
+import { startTheme } from "./lib/theme";
 
 // Last loaded data lives in IndexedDB so the app opens offline ("Offline · Stand 07:42").
 const persister = createAsyncStoragePersister({
@@ -20,6 +21,7 @@ configureOutbox({ onSynced: invalidateData, ownerNameOf: cachedOwnerName });
 void loadOutbox().then(() => flush());
 startAutoFlush();
 startServiceWorker();
+startTheme();
 
 // Ask the browser to keep our storage (iOS keeps it anyway for Home Screen apps).
 void navigator.storage?.persist?.();

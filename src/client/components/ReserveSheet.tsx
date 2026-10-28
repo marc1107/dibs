@@ -306,13 +306,13 @@ function Timeline({ conflict, mine, people, ownerId }: { conflict: Conflict; min
       <div className="relative h-14 overflow-hidden rounded-xl bg-bg">
         <div
           className="absolute top-2 h-[18px] truncate rounded-md pl-2 text-[12px] font-semibold leading-[18px]"
-          style={{ left: `${pos(other.startsAt)}%`, width: `${pos(other.endsAt) - pos(other.startsAt)}%`, background: op.soft, color: op.color }}
+          style={{ left: `${pos(other.startsAt)}%`, width: `${pos(other.endsAt) - pos(other.startsAt)}%`, background: op.soft, color: op.ink }}
         >
           {op.name} {label(other)}
         </div>
         <div
           className="striped absolute top-[30px] h-[18px] truncate rounded-md border border-dashed pl-2 text-[12px] font-semibold leading-4"
-          style={{ left: `${pos(mine.startsAt)}%`, width: `${pos(mine.endsAt) - pos(mine.startsAt)}%`, background: me.soft, color: me.color, borderColor: me.color }}
+          style={{ left: `${pos(mine.startsAt)}%`, width: `${pos(mine.endsAt) - pos(mine.startsAt)}%`, background: me.soft, color: me.ink, borderColor: me.color }}
         >
           Du {label(mine)}
         </div>

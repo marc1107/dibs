@@ -19,7 +19,7 @@ export const toMember = (u: UserRow): MemberDto => ({ id: u.id, name: u.name, co
 export async function nextFreeColor(db: Db): Promise<string> {
   const used = await db.select({ color: user.color }).from(user).where(inArray(user.status, ["active", "pending"]));
   const taken = new Set(used.map((u) => u.color));
-  return (PALETTE.find((p) => !taken.has(p.solid)) ?? PALETTE[used.length % PALETTE.length]!).solid;
+  return PALETTE.find((c) => !taken.has(c)) ?? PALETTE[used.length % PALETTE.length]!;
 }
 
 export async function notificationSettings(db: Db, userId: string): Promise<Record<NotificationType, boolean>> {

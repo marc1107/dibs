@@ -157,7 +157,7 @@ export function BookingPage() {
       <Sheet open={askScope !== null} onClose={() => setAskScope(null)} label="Serientermin">
         <h2 className="text-xl font-bold">{askScope === "cancel" ? "Serientermin stornieren" : "Serientermin bearbeiten"}</h2>
         <div className="flex flex-col gap-2.5 pb-2">
-          <Button variant="dark" size="lg" onClick={() => run(askScope!, "this")}>
+          <Button variant="strong" size="lg" onClick={() => run(askScope!, "this")}>
             Nur dieser Termin
           </Button>
           <Button variant="soft" size="lg" onClick={() => run(askScope!, "following")}>
