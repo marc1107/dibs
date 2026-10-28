@@ -1,0 +1,64 @@
+@import "tailwindcss";
+
+@theme {
+  --font-sans: -apple-system, "SF Pro Text", system-ui, sans-serif;
+  --color-ink: #16181d;
+  --color-ink-soft: #3a3f4a;
+  --color-muted: #5b616e;
+  --color-faint: #9aa0aa;
+  --color-bg: #f5f6f8;
+  --color-card: #ffffff;
+  --color-line: #eef0f3;
+  --color-border: #d5d8de;
+  --color-fill: #eef0f3;
+  --color-accent: #2563eb;
+  --color-accent-strong: #1d4ed8;
+  --color-accent-soft: #dce7fd;
+  --color-ok: #0b7a6e;
+  --color-danger: #b42318;
+  --color-danger-soft: #fdecec;
+  --color-warn-ink: #7a3a00;
+  --color-warn-bg: #fff4e5;
+  --color-badge-ink: #6b4e00;
+  --color-badge-bg: #fff1c2;
+}
+
+@layer base {
+  html,
+  body,
+  #root {
+    min-height: 100%;
+  }
+  body {
+    @apply bg-bg font-sans text-ink antialiased;
+    -webkit-tap-highlight-color: transparent;
+    overscroll-behavior-y: none;
+  }
+  button,
+  a,
+  input,
+  select {
+    touch-action: manipulation;
+  }
+  button:focus-visible,
+  a:focus-visible,
+  input:focus-visible,
+  select:focus-visible {
+    @apply outline-2 outline-offset-2 outline-accent;
+  }
+}
+
+@utility pt-safe {
+  padding-top: max(env(safe-area-inset-top), 20px);
+}
+@utility pb-safe {
+  padding-bottom: max(env(safe-area-inset-bottom), 16px);
+}
+
+/* Requested bookings are striped ("angefragt"); freed rest of an early return is grey striped. */
+@utility striped {
+  background-image: repeating-linear-gradient(135deg, rgb(22 24 29 / 0.12) 0 3px, transparent 3px 7px);
+}
+@utility striped-grey {
+  background-image: repeating-linear-gradient(135deg, #e6e8ec 0 4px, #f5f6f8 4px 8px);
+}

@@ -1,0 +1,45 @@
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  ci:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@ea17c68df8912ef543352723c149a84f56e3d413 # v6.1.0
+      - uses: actions/setup-node@v7
+        with:
+          node-version: lts/*
+          cache: pnpm
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm typecheck
+      # Local-only secrets for tests and the dev server (test keys, dev login on localhost).
+      - run: cp .dev.vars.example .dev.vars
+      - name: Unit and integration tests (Vitest, real local D1)
+        run: pnpm test
+      - run: pnpm build
+      - run: pnpm audit --audit-level high
+      - name: Install Playwright browsers
+        run: pnpm exec playwright install --with-deps webkit chromium
+        timeout-minutes: 8
+      - name: E2E (Playwright, iPhone viewport, local Worker + D1)
+        run: pnpm test:e2e
+      - uses: actions/upload-artifact@v7
+        if: failure()
+        with:
+          name: playwright-report
+          path: playwright-report
+          retention-days: 7
