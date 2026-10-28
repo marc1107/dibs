@@ -21,8 +21,8 @@ export default defineConfig({
       registerType: "prompt",
       injectRegister: false,
       manifest: {
-        name: "Schlüsselbrett",
-        short_name: "Auto",
+        name: "dibs",
+        short_name: "dibs",
         description: "Wer hat wann das Auto?",
         lang: "de",
         start_url: "/",

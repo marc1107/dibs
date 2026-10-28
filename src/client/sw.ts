@@ -33,7 +33,7 @@ self.addEventListener("push", (event) => {
     })(),
   );
   event.waitUntil(
-    self.registration.showNotification(data.title ?? "Auto", {
+    self.registration.showNotification(data.title ?? "dibs", {
       body: data.body,
       tag: data.tag,
       icon: "/icons/icon-192.png",

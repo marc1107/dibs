@@ -72,7 +72,7 @@ export function HomePage() {
   return (
     <div className="mx-auto flex min-h-dvh max-w-xl flex-col pb-[180px]">
       <header className="flex items-center justify-between px-5 pb-3 pt-safe">
-        <h1 className="pt-6 text-[30px] font-bold tracking-[-0.5px]">Auto</h1>
+        <h1 className="pt-6 text-[30px] font-bold tracking-[-0.5px]">dibs</h1>
         <div className="flex items-center gap-2 pt-6">
           {offline && <Badge>Offline{dataTime ? ` · Stand ${dataTime}` : ""}</Badge>}
           <button type="button" aria-label="Menü" onClick={() => setMenuOpen(true)} className="rounded-full">

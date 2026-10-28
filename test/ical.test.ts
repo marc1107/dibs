@@ -18,7 +18,7 @@ describe("iCal feed", () => {
     const res = await rawFetch(await feedPath(tim));
     expect(res.headers.get("content-type")).toMatch(/text\/calendar/);
     const text = await res.text();
-    expect(text).toContain("SUMMARY:Auto: Lena");
+    expect(text).toContain("SUMMARY:🚗 Lena");
     expect(text).toContain("DESCRIPTION:Umzug\\, Teil 2\\; Kisten");
     expect(text).toContain("DTSTART;VALUE=DATE:20301105");
     expect(text).toContain("DTEND;VALUE=DATE:20301106");
@@ -33,8 +33,8 @@ describe("iCal feed", () => {
     await book(lena, { startDate: "2030-11-05", endDate: "2030-11-05" });
     await book(tim, { startDate: "2030-11-06", endDate: "2030-11-06" });
     const text = await (await rawFetch(`${await feedPath(tim)}?scope=mine`)).text();
-    expect(text).toContain("Auto: Tim");
-    expect(text).not.toContain("Auto: Lena");
+    expect(text).toContain("🚗 Tim");
+    expect(text).not.toContain("🚗 Lena");
   });
 
   it("invalidates the old link immediately when a new one is generated", async () => {

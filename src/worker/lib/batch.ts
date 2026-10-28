@@ -6,7 +6,7 @@ export type Statement = SQL | { toSQL(): { sql: string; params: unknown[] } };
 
 const dialect = new SQLiteAsyncDialect();
 /** Only guard() can produce this error message ("bad JSON path: '<marker>'"). */
-const GUARD_MARKER = "schluesselbrett_guard_violated";
+const GUARD_MARKER = "dibs_guard_violated";
 
 /** Raised when a `guard` statement inside a batch found its condition violated; nothing was written. */
 export class GuardError extends Error {}

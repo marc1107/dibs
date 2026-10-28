@@ -17,5 +17,5 @@ test("registers a passkey after approval and signs in with it", async ({ page, c
   await page.getByRole("button", { name: "Abmelden" }).click();
   await expect(page).toHaveURL(/\/login$/);
   await page.getByRole("button", { name: /Mit Passkey/ }).click();
-  await expect(page.getByRole("heading", { name: "Auto", exact: true })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "dibs", exact: true })).toBeVisible();
 });

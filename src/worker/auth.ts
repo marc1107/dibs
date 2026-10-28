@@ -20,7 +20,7 @@ export function createAuth(env: Env, db: Db, notifier?: Notifier) {
   const adminEmail = env.ADMIN_EMAIL.trim().toLowerCase();
 
   return betterAuth({
-    appName: "Schlüsselbrett",
+    appName: "dibs",
     baseURL: env.APP_URL,
     basePath: "/api/auth",
     secret: env.BETTER_AUTH_SECRET,
@@ -90,7 +90,7 @@ export function createAuth(env: Env, db: Db, notifier?: Notifier) {
       },
     },
     plugins: [
-      passkey({ rpID: appUrl.hostname, rpName: "Schlüsselbrett", origin: appUrl.origin }),
+      passkey({ rpID: appUrl.hostname, rpName: "dibs", origin: appUrl.origin }),
       captcha({
         provider: "cloudflare-turnstile",
         secretKey: env.TURNSTILE_SECRET_KEY,

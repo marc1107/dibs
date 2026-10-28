@@ -1,9 +1,1 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <rect width="512" height="512" rx="112" fill="#16181D"/>
-  <g transform="translate(64 64) scale(16)" fill="none" stroke="#FFFFFF" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round">
-    <path d="M5 17h14v-4l-2-5H7l-2 5v4z"/>
-    <path d="M5 13h14"/>
-    <circle cx="8" cy="17" r="1.6"/>
-    <circle cx="16" cy="17" r="1.6"/>
-  </g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512"><rect width="512" height="512" rx="115.2" fill="#2563EB"/><g transform="translate(76.80000000000001 136.05839416058396) scale(0.654014598540146) translate(0 -95.0)" stroke="#FFFFFF" stroke-width="30" stroke-linecap="round" stroke-linejoin="round" fill="none"><circle fill="none" cx="67.0" cy="236.0" r="52"/><path d="M119.0 110 V300"/><path d="M175.0 172 V300"/><circle cx="175.0" cy="118" r="18.6" fill="#FFFFFF" stroke="none"/><path d="M231.0 110 V300"/><circle fill="none" cx="283.0" cy="236.0" r="52"/><path d="M473.0 194 C459.0 170 395.0 168 393.0 204 C391.0 238.0 477.0 232.0 477.0 266 C479.0 306 401.0 304 389.0 280"/><path d="M533.0 110 V238"/><circle cx="533.0" cy="294" r="18.6" fill="#FFFFFF" stroke="none"/></g><g transform="translate(179.2 305.5416058394161) scale(3.1999999999999997)" fill="none" stroke="#FFFFFF" stroke-width="3.0" stroke-linecap="round" stroke-linejoin="round"><path d="M4 18h40v-8l-5-9H11l-5 9v8z"/><circle cx="14" cy="18" r="3" fill="#2563EB"/><circle cx="34" cy="18" r="3" fill="#2563EB"/></g></svg>

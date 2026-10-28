@@ -13,7 +13,7 @@ import { startServiceWorker } from "./lib/sw";
 // Last loaded data lives in IndexedDB so the app opens offline ("Offline · Stand 07:42").
 const persister = createAsyncStoragePersister({
   storage: { getItem: (k) => get(k), setItem: (k, v) => set(k, v), removeItem: (k) => del(k) },
-  key: "schluesselbrett-cache",
+  key: "dibs-cache",
 });
 
 configureOutbox({ onSynced: invalidateData, ownerNameOf: cachedOwnerName });
