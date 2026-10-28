@@ -69,7 +69,7 @@ export async function buildFeed(db: Db, token: string, ownOnly: boolean, now: Da
     "X-PUBLISHED-TTL:PT1H",
   ];
   for (const { b, name } of rows) {
-    lines.push("BEGIN:VEVENT", `UID:${b.id}@dibs.bohner.cloud`, `DTSTAMP:${stamp(b.updatedAt)}`);
+    lines.push("BEGIN:VEVENT", `UID:${b.id}@schluesselbrett`, `DTSTAMP:${stamp(b.updatedAt)}`);
     if (b.allDay) {
       const start = utcToLocal(b.startsAt).date;
       const end = addDays(utcToLocalEnd(b.endsAt).date, 1);

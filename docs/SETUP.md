@@ -31,7 +31,7 @@ pnpm exec wrangler login
 ./scripts/setup-cloudflare.sh
 ```
 
-The script creates the D1 databases `schluesselbrett` and `schluesselbrett-preview` and the private R2 bucket `schluesselbrett-backups`, then (after you confirm that `wrangler.jsonc` is filled in) asks for every Worker secret and applies the migrations. Copy the printed `database_id` values into `wrangler.jsonc`.
+The script creates the D1 databases `schluesselbrett` and `schluesselbrett-preview` and the private R2 bucket `dibs-backups`, then (after you confirm that `wrangler.jsonc` is filled in) asks for every Worker secret and applies the migrations. Copy the printed `database_id` values into `wrangler.jsonc`.
 
 **Cloudflare API token for GitHub Actions:** dashboard → My Profile → API Tokens → Create Token → template *Edit Cloudflare Workers*, then add **Account · D1 · Edit**. Restrict it to your account and zone. Save as GitHub secret `CLOUDFLARE_API_TOKEN`; the account ID (dashboard sidebar) as `CLOUDFLARE_ACCOUNT_ID`.
 

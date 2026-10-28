@@ -12,7 +12,7 @@ import { createStore } from "./store";
  * shown immediately (see applyOutbox) and sent via POST /api/sync as soon as the app is
  * open and online. Safari has no Background Sync, so the UI shows what is still unsent.
  */
-const idb = typeof indexedDB === "undefined" ? undefined : createIdbStore("dibs-outbox", "entries");
+const idb = typeof indexedDB === "undefined" ? undefined : createIdbStore("schluesselbrett-outbox", "entries");
 
 /** Actions per /api/sync call; small so one call stays cheap for D1. */
 const SYNC_BATCH = 10;
