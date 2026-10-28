@@ -32,21 +32,10 @@ export const AUDIT_SOURCES = ["online", "offline-sync", "admin"] as const;
 export type AuditSource = (typeof AUDIT_SOURCES)[number];
 
 /**
- * Person colours: `solid` for bars, text and avatars; `soft` for filled all-day cells.
- * Assigned in this order to new users (first free colour wins).
+ * Person colours, assigned in this order to new users (first free colour wins).
+ * The client derives tinted backgrounds and text tones from them (lib/people.ts), per theme.
  */
-export const PALETTE = [
-  { solid: "#2563EB", soft: "#DCE7FD" },
-  { solid: "#C2410C", soft: "#FDE4D6" },
-  { solid: "#0B7A6E", soft: "#DDF3EF" },
-  { solid: "#7C3AED", soft: "#EDE4FD" },
-  { solid: "#BE185D", soft: "#FCE3EF" },
-  { solid: "#4D7C0F", soft: "#E8F3D6" },
-] as const;
-
-export function softColor(solid: string): string {
-  return PALETTE.find((p) => p.solid === solid)?.soft ?? "#EEF0F3";
-}
+export const PALETTE = ["#2563EB", "#C2410C", "#0B7A6E", "#7C3AED", "#BE185D", "#4D7C0F"] as const;
 
 export const NOTIFICATION_TYPES = [
   "approval_request",

@@ -1,8 +1,11 @@
 import { formatDay, formatRange, MONTHS_LONG, todayLocal, utcToLocal, type LocalDate } from "@shared/time";
+import { AnimatePresence, motion } from "motion/react";
+import { useRef, type ReactNode } from "react";
 import { Link } from "react-router";
 import { daySegments, isPast, monthGrid, type DaySegment, type ViewBooking } from "../lib/calendar";
 import type { People } from "../lib/people";
 import { addDays } from "@shared/time";
+import { EASE_OUT, slide } from "../lib/motion";
 import { ChevronLeft, ChevronRight, ClockIcon, cx } from "./ui";
 
 export interface Selection {
@@ -18,16 +21,78 @@ export function inSelection(date: LocalDate, sel: Selection | null) {
 
 export function MonthNav({ label, onPrev, onNext }: { label: string; onPrev: () => void; onNext: () => void }) {
   return (
-    <div className="flex items-center justify-between px-1 pb-2.5">
-      <button type="button" aria-label="Zurück" onClick={onPrev} className="flex size-11 items-center justify-center rounded-full active:bg-fill">
-        <ChevronLeft size={18} />
-      </button>
-      <span className="text-base font-semibold" aria-live="polite">
+    <div className="flex items-center justify-between pb-2">
+      <span className="pl-1.5 font-rounded text-[19px] font-bold tracking-[-0.2px]" aria-live="polite">
         {label}
       </span>
-      <button type="button" aria-label="Weiter" onClick={onNext} className="flex size-11 items-center justify-center rounded-full active:bg-fill">
-        <ChevronRight size={18} />
-      </button>
+      <span className="flex">
+        <button type="button" aria-label="Zurück" onClick={onPrev} className="pressable flex size-11 items-center justify-center rounded-full text-accent active:bg-fill">
+          <ChevronLeft size={20} />
+        </button>
+        <button type="button" aria-label="Weiter" onClick={onNext} className="pressable flex size-11 items-center justify-center rounded-full text-accent active:bg-fill">
+          <ChevronRight size={20} />
+        </button>
+      </span>
+    </div>
+  );
+}
+
+/**
+ * Pages calendar content horizontally: swipe left for later, right for earlier. The new page comes in
+ * from the side it was pulled from, so the gesture and the arrows tell the same story.
+ */
+export function SwipePager({
+  pageKey,
+  dir,
+  onPrev,
+  onNext,
+  children,
+}: {
+  pageKey: string;
+  dir: number;
+  onPrev: () => void;
+  onNext: () => void;
+  children: ReactNode;
+}) {
+  // A swipe can end with a click on whatever is under the finger (day cell, booking link); swallow it.
+  const dragged = useRef(false);
+  return (
+    <div
+      className="relative overflow-hidden"
+      onClickCapture={(e) => {
+        if (!dragged.current) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
+      <AnimatePresence initial={false} custom={dir} mode="popLayout">
+        <motion.div
+          key={pageKey}
+          custom={dir}
+          variants={slide}
+          initial="enter"
+          animate="center"
+          exit="exit"
+          transition={EASE_OUT}
+          drag="x"
+          dragDirectionLock
+          dragSnapToOrigin
+          dragElastic={0.35}
+          dragConstraints={{ left: 0, right: 0 }}
+          onDragStart={() => {
+            dragged.current = true;
+          }}
+          onDragEnd={(_, info) => {
+            setTimeout(() => (dragged.current = false), 50);
+            const swipe = info.offset.x + info.velocity.x * 0.2;
+            if (swipe < -70) onNext();
+            else if (swipe > 70) onPrev();
+          }}
+          className="touch-pan-y"
+        >
+          {children}
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }
@@ -83,16 +148,15 @@ export function MonthView({
               aria-pressed={selected}
               onClick={() => onDayTap(date)}
               className={cx(
-                "relative flex h-[46px] flex-col items-center justify-center gap-1 rounded-xl",
+                "relative flex h-[46px] flex-col items-center justify-center gap-1 rounded-xl transition-[background-color,box-shadow] duration-200 active:scale-95",
                 fullOne?.booking.status === "requested" && "striped",
-                selected && "ring-2 ring-accent ring-inset",
-                !selected && date === today && "ring-2 ring-ink ring-inset",
+                selected ? "bg-accent-soft ring-2 ring-accent ring-inset" : date === today && "ring-2 ring-ink ring-inset",
               )}
-              style={{ background: selected ? "#DCE7FD" : person ? person.soft : undefined }}
+              style={{ background: selected ? undefined : person ? person.soft : undefined }}
             >
               <span
-                className={cx("text-[15px]", date === today ? "font-bold" : "font-medium")}
-                style={{ color: past ? "#9AA0AA" : person ? person.color : "#16181D" }}
+                className={cx("font-rounded text-[16px] tabular-nums", date === today ? "font-bold" : "font-medium", past && "text-faint")}
+                style={{ color: past ? undefined : person ? person.ink : undefined }}
               >
                 {Number(date.slice(8))}
               </span>
@@ -103,7 +167,7 @@ export function MonthView({
                     className={cx("h-1 rounded-sm", (s.booking.status === "requested" || s.freed) && "opacity-50")}
                     style={{
                       width: s.full && segs.length === 1 ? 22 : segs.length > 1 ? 8 : 12,
-                      background: s.freed ? "#9AA0AA" : people.get(s.booking.ownerId).color,
+                      background: s.freed ? "var(--color-faint)" : people.get(s.booking.ownerId).color,
                     }}
                   />
                 ))}
@@ -171,8 +235,9 @@ export function WeekView({
             aria-label={dayLabel(date, segs, people)}
             aria-pressed={inSelection(date, selection)}
             className={cx(
-              "flex min-h-12 items-center gap-3 rounded-xl px-2 text-left",
+              "flex min-h-12 items-center gap-3 rounded-xl px-2 text-left transition-colors duration-200",
               inSelection(date, selection) && "bg-accent-soft ring-2 ring-accent ring-inset",
+              date === today && !inSelection(date, selection) && "bg-fill",
             )}
           >
             <span className={cx("w-14 shrink-0 text-[14px]", date === today ? "font-bold" : "font-medium", isPast(date, now) && "text-faint")}>
@@ -192,7 +257,7 @@ export function WeekView({
                       left: `${s.from * 100}%`,
                       width: `${Math.max(2, (s.to - s.from) * 100)}%`,
                       background: s.freed ? undefined : p.soft,
-                      color: s.freed ? "#5B616E" : p.color,
+                      color: s.freed ? "var(--color-muted)" : p.ink,
                     }}
                   >
                     {s.freed ? "frei" : p.name}
@@ -264,7 +329,7 @@ export function BookingRow({ booking: b, people, last, subtitle }: { booking: Vi
   return b.pending ? (
     <div className={cls}>{content}</div>
   ) : (
-    <Link to={`/bookings/${b.id}`} className={cx(cls, "active:bg-fill")}>
+    <Link to={`/bookings/${b.id}`} className={cx(cls, "transition-colors active:bg-fill")}>
       {content}
     </Link>
   );

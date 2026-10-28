@@ -7,6 +7,7 @@ import { useState } from "react";
 import { useNavigate, useParams } from "react-router";
 import { Avatar, Button, Card, ErrorBox, Screen, Spinner } from "../components/ui";
 import { api, errorMessage } from "../lib/api";
+import { BACK_STATE } from "../lib/nav";
 import { notify } from "../lib/notices";
 import { usePeople } from "../lib/people";
 import { useOnline } from "../lib/platform";
@@ -49,7 +50,7 @@ function Answer({ r }: { r: RequestDetailDto }) {
     onSuccess: () => {
       invalidateData();
       notify({ tone: "success", title: "Antwort gesendet" });
-      navigate("/");
+      void navigate("/", { replace: true, state: BACK_STATE });
     },
     onError: (e) => notify({ tone: "error", title: "Nicht möglich", body: errorMessage(e) }),
   });
