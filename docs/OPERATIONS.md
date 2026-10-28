@@ -17,17 +17,18 @@ Manual deploy from a laptop: `pnpm deploy` (needs `wrangler login`).
 - **D1 Time Travel** (built in, 7 days on the free plan): restore to any minute.
 
   ```bash
+  # The D1 database keeps its original name "schluesselbrett" (D1 databases cannot be renamed).
   pnpm exec wrangler d1 time-travel info schluesselbrett
   pnpm exec wrangler d1 time-travel restore schluesselbrett --timestamp=2026-10-26T10:00:00Z
   ```
 
-- **Weekly export to R2** (Sunday 03:00 UTC, last 12 kept) in `schluesselbrett-backups/backups/YYYY-MM-DD.json`: one JSON object per table. Download with `pnpm exec wrangler r2 object get schluesselbrett-backups/backups/<date>.json --file backup.json --remote`. To restore into an empty database, apply the migrations and insert the rows table by table (users first, then series, booking, request, audit_log). People sign in again with Google afterwards because sessions and OAuth accounts are not part of the export.
+- **Weekly export to R2** (Sunday 03:00 UTC, last 12 kept) in `dibs-backups/backups/YYYY-MM-DD.json`: one JSON object per table. Download with `pnpm exec wrangler r2 object get dibs-backups/backups/<date>.json --file backup.json --remote`. To restore into an empty database, apply the migrations and insert the rows table by table (users first, then series, booking, request, audit_log). People sign in again with Google afterwards because sessions and OAuth accounts are not part of the export.
 
 ## Free-plan limits
 
 Workers: 100,000 requests/day. D1: daily read/write limits; since 1 September 2026 queries fail until midnight UTC once exceeded. Three people stay far below both. Booking creation uses a fixed number of statements regardless of series length, and the calendar loads one month per request.
 
-Check usage in the Cloudflare dashboard (Workers & Pages → schluesselbrett → Metrics, Storage & Databases → D1).
+Check usage in the Cloudflare dashboard (Workers & Pages → dibs → Metrics, Storage & Databases → D1).
 
 ## Logs
 

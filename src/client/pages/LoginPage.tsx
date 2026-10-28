@@ -90,8 +90,8 @@ export function LoginPage() {
       <div className="mt-24 flex size-[84px] items-center justify-center rounded-[22px] bg-ink">
         <CarIcon />
       </div>
-      <h1 className="mt-2 text-[28px] font-bold">Auto-Kalender</h1>
-      <p className="mb-5 text-center text-base text-muted">Nur für unseren Haushalt.</p>
+      <h1 className="mt-2 text-[28px] font-bold">dibs</h1>
+      <p className="mb-5 text-center text-base text-muted">Wer hat wann das Auto?</p>
       <div className="flex w-full flex-col gap-3">
         <Button variant="outline" size="lg" disabled={busy || !token} onClick={() => void google()}>
           <span aria-hidden="true" className="font-extrabold text-accent">

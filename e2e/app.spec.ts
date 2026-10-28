@@ -6,7 +6,7 @@ test.describe.configure({ mode: "serial" });
 test("shows the login page to signed-out visitors", async ({ page }) => {
   await page.goto("/");
   await expect(page).toHaveURL(/\/login$/);
-  await expect(page.getByRole("heading", { name: "Auto-Kalender" })).toBeVisible();
+  await expect(page.getByRole("heading", { name: "dibs" })).toBeVisible();
   await expect(page.getByRole("button", { name: /Mit Passkey/ })).toBeVisible();
 });
 
@@ -22,7 +22,7 @@ test("keeps new people waiting until the admin approves them", async ({ page, br
   await expect(page.getByText("Freigabe-Anfragen (0)")).toBeVisible();
 
   await newbie.page.reload();
-  await expect(newbie.page.getByRole("heading", { name: "Auto", exact: true })).toBeVisible();
+  await expect(newbie.page.getByRole("heading", { name: "dibs", exact: true })).toBeVisible();
   await newbie.context.close();
 });
 

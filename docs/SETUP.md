@@ -31,14 +31,14 @@ pnpm exec wrangler login
 ./scripts/setup-cloudflare.sh
 ```
 
-The script creates the D1 databases `schluesselbrett` and `schluesselbrett-preview` and the private R2 bucket `schluesselbrett-backups`, then (after you confirm that `wrangler.jsonc` is filled in) asks for every Worker secret and applies the migrations. Copy the printed `database_id` values into `wrangler.jsonc`.
+The script creates the D1 databases `schluesselbrett` and `schluesselbrett-preview` and the private R2 bucket `dibs-backups`, then (after you confirm that `wrangler.jsonc` is filled in) asks for every Worker secret and applies the migrations. Copy the printed `database_id` values into `wrangler.jsonc`.
 
 **Cloudflare API token for GitHub Actions:** dashboard → My Profile → API Tokens → Create Token → template *Edit Cloudflare Workers*, then add **Account · D1 · Edit**. Restrict it to your account and zone. Save as GitHub secret `CLOUDFLARE_API_TOKEN`; the account ID (dashboard sidebar) as `CLOUDFLARE_ACCOUNT_ID`.
 
 ## 3. Google OAuth client
 
-1. <https://console.cloud.google.com/> → new project "Schlüsselbrett".
-2. *APIs & Services → OAuth consent screen*: External, app name "Auto-Kalender", your e-mail. Keep the publishing status **Testing** and add the three Google accounts as **test users** (only they can sign in, which is exactly what we want).
+1. <https://console.cloud.google.com/> → new project "dibs".
+2. *APIs & Services → OAuth consent screen*: External, app name "dibs", your e-mail. Keep the publishing status **Testing** and add the three Google accounts as **test users** (only they can sign in, which is exactly what we want).
 3. *Credentials → Create credentials → OAuth client ID → Web application*:
    - Authorized JavaScript origins: `https://auto.example.com`
    - Authorized redirect URIs: `https://auto.example.com/api/auth/callback/google`

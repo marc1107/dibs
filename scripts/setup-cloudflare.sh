@@ -9,7 +9,7 @@ pnpm exec wrangler d1 create schluesselbrett-preview || echo "(schluesselbrett-p
 pnpm exec wrangler d1 list
 
 echo "== R2 bucket for backups"
-pnpm exec wrangler r2 bucket create schluesselbrett-backups || echo "(bucket exists)"
+pnpm exec wrangler r2 bucket create dibs-backups || echo "(bucket exists)"
 
 read -r -p "Have you replaced all REPLACE_ values in wrangler.jsonc? [y/N] " ok
 [[ "$ok" == "y" ]] || { echo "Fill in wrangler.jsonc first, then re-run."; exit 1; }

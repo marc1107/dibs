@@ -60,10 +60,10 @@ export async function buildFeed(db: Db, token: string, ownOnly: boolean, now: Da
   const lines = [
     "BEGIN:VCALENDAR",
     "VERSION:2.0",
-    "PRODID:-//Schluesselbrett//Auto-Kalender//DE",
+    "PRODID:-//dibs//dibs//DE",
     "CALSCALE:GREGORIAN",
     "METHOD:PUBLISH",
-    `X-WR-CALNAME:${ownOnly ? "Auto (meine)" : "Auto"}`,
+    `X-WR-CALNAME:${ownOnly ? "dibs (meine)" : "dibs"}`,
     "X-WR-TIMEZONE:Europe/Berlin",
     "REFRESH-INTERVAL;VALUE=DURATION:PT1H",
     "X-PUBLISHED-TTL:PT1H",
@@ -77,7 +77,7 @@ export async function buildFeed(db: Db, token: string, ownOnly: boolean, now: Da
     } else {
       lines.push(`DTSTART:${stamp(b.startsAt)}`, `DTEND:${stamp(b.endsAt)}`);
     }
-    lines.push(`SUMMARY:${escapeText(`Auto: ${name}`)}`, "TRANSP:TRANSPARENT");
+    lines.push(`SUMMARY:${escapeText(`🚗 ${name}`)}`, "TRANSP:TRANSPARENT");
     if (b.note) lines.push(`DESCRIPTION:${escapeText(b.note)}`);
     lines.push("END:VEVENT");
   }

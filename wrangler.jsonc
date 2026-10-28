@@ -4,7 +4,7 @@
 // TURNSTILE_SECRET_KEY and ADMIN_EMAIL are set with `wrangler secret put`.
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "schluesselbrett",
+  "name": "dibs",
   "main": "src/worker/index.ts",
   "compatibility_date": "2026-10-01",
   "compatibility_flags": ["nodejs_compat"],
@@ -41,8 +41,8 @@
   ],
 
   "r2_buckets": [
-    // Private bucket for the weekly database export: `wrangler r2 bucket create schluesselbrett-backups`.
-    { "binding": "BACKUPS", "bucket_name": "schluesselbrett-backups" }
+    // Private bucket for the weekly database export: `wrangler r2 bucket create dibs-backups`.
+    { "binding": "BACKUPS", "bucket_name": "dibs-backups" }
   ],
 
   "ratelimits": [
@@ -58,11 +58,11 @@
   "env": {
     // PR previews (preview.yml): separate Worker and database, no cron jobs, no custom domain.
     "preview": {
-      "name": "schluesselbrett-preview",
+      "name": "dibs-preview",
       "workers_dev": true,
       "routes": [],
       "vars": {
-        "APP_URL": "https://schluesselbrett-preview.m-bohner99.workers.dev",
+        "APP_URL": "https://dibs-preview.m-bohner99.workers.dev",
         "TURNSTILE_SITE_KEY": "0x4AAAAAAFpu8GIm7xAHo8mK",
         "VAPID_PUBLIC_KEY": "BJmixzMloLNlKxiIBVr-iQSOaK1wrIE1m8bSPRxrgKn2xSGsPcSpCWCWh6Ld8ivxhUsYUhrREzdsi25ihV61TVE",
         "VAPID_SUBJECT": "https://dibs.bohner.cloud"
@@ -75,7 +75,7 @@
           "migrations_dir": "migrations"
         }
       ],
-      "r2_buckets": [{ "binding": "BACKUPS", "bucket_name": "schluesselbrett-backups" }],
+      "r2_buckets": [{ "binding": "BACKUPS", "bucket_name": "dibs-backups" }],
       "ratelimits": [
         { "name": "AUTH_LIMITER", "namespace_id": "1002", "simple": { "limit": 30, "period": 60 } }
       ],
