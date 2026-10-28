@@ -10,7 +10,7 @@ export function cx(...classes: (string | false | null | undefined)[]) {
 }
 
 /** Sub-page layout: sticky translucent header with back button (also reachable by swiping from the left edge). */
-export function Screen({ title, children, back }: { title: string; children: ReactNode; back?: string }) {
+export function Screen({ title, children }: { title: string; children: ReactNode }) {
   const goBack = useGoBack();
   const { pathname } = useLocation();
   return (
@@ -19,7 +19,7 @@ export function Screen({ title, children, back }: { title: string; children: Rea
         <button
           type="button"
           aria-label="Zurück"
-          onClick={() => goBack(back ?? parentPath(pathname))}
+          onClick={() => goBack(parentPath(pathname))}
           className="pressable mt-2 flex size-11 items-center justify-center rounded-full text-accent active:bg-fill"
         >
           <ChevronLeft size={24} />
@@ -45,7 +45,7 @@ const VARIANTS: Record<Variant, string> = {
   strong: "bg-inverse text-on-inverse active:opacity-85",
   soft: "bg-fill text-ink active:bg-fill-strong",
   danger: "bg-danger-soft text-danger active:brightness-95",
-  ok: "bg-ok text-white active:brightness-95",
+  ok: "bg-ok text-on-ok active:brightness-95",
   outline: "border border-border bg-card text-ink active:bg-fill",
 };
 

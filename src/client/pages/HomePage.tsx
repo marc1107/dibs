@@ -142,13 +142,13 @@ export function HomePage() {
           onPrev={() => page(-1)}
           onNext={() => page(1)}
         >
-          {(guardTap) => {
-            const tap = (date: LocalDate) => guardTap(() => onDayTap(date))();
-            if (view === "week") return <WeekView start={week} bookings={bookings} people={people} selection={selection} onDayTap={tap} now={now} />;
-            if (view === "month")
-              return <MonthView year={cursor.year} month={cursor.month} bookings={current.bookings} people={people} selection={selection} onDayTap={tap} now={now} />;
-            return <ListView bookings={current.bookings} people={people} now={now} />;
-          }}
+          {view === "week" ? (
+            <WeekView start={week} bookings={bookings} people={people} selection={selection} onDayTap={onDayTap} now={now} />
+          ) : view === "month" ? (
+            <MonthView year={cursor.year} month={cursor.month} bookings={current.bookings} people={people} selection={selection} onDayTap={onDayTap} now={now} />
+          ) : (
+            <ListView bookings={current.bookings} people={people} now={now} />
+          )}
         </SwipePager>
         {view !== "list" && <Legend people={people} />}
       </Card>
@@ -207,12 +207,10 @@ function NowCard({ holder, next, people }: { holder?: ViewBooking; next?: ViewBo
   const until = holder ? utcToLocalEnd(holder.endsAt) : null;
   const sameDay = until && holder && until.date === utcToLocal(new Date().toISOString()).date;
   if (holder && p && until) {
-    return (
-      <Link
-        to={`/bookings/${holder.id}`}
-        className="pressable relative mx-4 mt-3 flex items-center gap-4 overflow-hidden rounded-[24px] p-5 text-white shadow-float"
-        style={{ background: `linear-gradient(140deg, ${p.color}, color-mix(in oklab, ${p.color} 72%, #000))` }}
-      >
+    const className = "relative mx-4 mt-3 flex items-center gap-4 overflow-hidden rounded-[24px] p-5 text-white shadow-float";
+    const style = { background: `linear-gradient(140deg, ${p.color}, color-mix(in oklab, ${p.color} 72%, #000))` };
+    const content = (
+      <>
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-[14px] font-medium opacity-80">Jetzt gerade</span>
           <span className="font-rounded text-[26px] leading-tight font-bold tracking-[-0.4px]">{p.name} hat das Auto</span>
@@ -223,6 +221,16 @@ function NowCard({ holder, next, people }: { holder?: ViewBooking; next?: ViewBo
         <span aria-hidden="true" className="flex size-14 shrink-0 items-center justify-center rounded-full bg-white/18 font-rounded text-[26px] font-bold">
           {p.name.slice(0, 1)}
         </span>
+      </>
+    );
+    // A booking still in the outbox has no detail page yet (same rule as BookingRow).
+    return holder.pending ? (
+      <div className={className} style={style}>
+        {content}
+      </div>
+    ) : (
+      <Link to={`/bookings/${holder.id}`} className={`pressable ${className}`} style={style}>
+        {content}
       </Link>
     );
   }

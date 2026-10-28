@@ -19,6 +19,7 @@
   --color-accent-strong: #1d4ed8;
   --color-accent-soft: #dce7fd;
   --color-on-accent: #ffffff;
+  --color-on-ok: #ffffff;
   --color-inverse: #12151c;
   --color-on-inverse: #ffffff;
   --color-ok: #0b7a6e;
@@ -57,7 +58,9 @@
     --color-accent: #4d8dff;
     --color-accent-strong: #79a8ff;
     --color-accent-soft: rgb(77 141 255 / 0.2);
-    --color-on-accent: #ffffff;
+    /* Light fills in dark mode carry dark text: white on them would fall below 4.5:1. */
+    --color-on-accent: #0b1220;
+    --color-on-ok: #04201c;
     --color-inverse: #eef1f5;
     --color-on-inverse: #12151c;
     --color-ok: #2fb5a2;

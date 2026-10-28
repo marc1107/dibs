@@ -1,11 +1,18 @@
 import { useCallback } from "react";
 import { useNavigate } from "react-router";
 
-/** "/admin/audit" → "/admin", "/requests" → "/". Unknown parents end up at "/" via the catch-all route. */
+/** Paths that are pages of their own, so they can be the target of "back". Keep in sync with App.tsx. */
+const PAGES = new Set(["/", "/requests", "/settings", "/history", "/admin", "/admin/audit"]);
+
+/** Nearest existing page above `path`: "/admin/audit" → "/admin", "/bookings/x" → "/" (there is no "/bookings"). */
 export function parentPath(path: string): string {
   const parts = path.split("/").filter(Boolean);
-  parts.pop();
-  return `/${parts.join("/")}`;
+  while (parts.length > 0) {
+    parts.pop();
+    const candidate = `/${parts.join("/")}`;
+    if (PAGES.has(candidate)) return candidate;
+  }
+  return "/";
 }
 
 /** Marks a navigation as "going back" so it animates like one even when it is not a history pop. */

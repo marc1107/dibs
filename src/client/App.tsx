@@ -1,6 +1,6 @@
 import { useIsRestoring } from "@tanstack/react-query";
 import { AnimatePresence, motion, MotionConfig, useDragControls, useIsPresent } from "motion/react";
-import { useEffect, type ReactNode } from "react";
+import { useEffect, useState, type ReactNode } from "react";
 import { Navigate, Route, Routes, useLocation, useNavigate, useNavigationType } from "react-router";
 import { Notices } from "./components/Notices";
 import { AppIcon, Button, Spinner } from "./components/ui";
@@ -73,14 +73,23 @@ function RestoredApp() {
   }
   // Only the signed-in app has a page hierarchy; status screens (loading, pending, offline) share one layer.
   const routed = Boolean(me.data && me.data.user.status === "active") || unauthenticated;
+  const layerKey = routed ? location.pathname : "status";
+  // Swapping to or from a status screen (loading, pending, offline) is not navigation: crossfade.
+  // Otherwise the first load (navigation type POP) would play a "back" slide.
+  const [prevLayerKey, setPrevLayerKey] = useState(layerKey);
+  const [statusSwap, setStatusSwap] = useState(false);
+  if (layerKey !== prevLayerKey) {
+    setPrevLayerKey(layerKey);
+    setStatusSwap(layerKey === "status" || prevLayerKey === "status");
+  }
   const back = navigationType === "POP" || (location.state as { back?: boolean } | null)?.back === true;
-  const dir = back ? -1 : navigationType === "PUSH" ? 1 : 0;
+  const dir = statusSwap ? 0 : back ? -1 : navigationType === "PUSH" ? 1 : 0;
 
   return (
     <MotionConfig reducedMotion="user">
       <Notices />
       <AnimatePresence initial={false} custom={dir}>
-        <PageLayer key={routed ? location.pathname : "status"} dir={dir} swipeBack={routed && location.pathname !== "/" && !unauthenticated}>
+        <PageLayer key={layerKey} dir={dir} swipeBack={routed && location.pathname !== "/" && !unauthenticated}>
           {content}
         </PageLayer>
       </AnimatePresence>

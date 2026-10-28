@@ -7,7 +7,7 @@ import { cx } from "./ui";
 
 const TONES = {
   info: "bg-inverse text-on-inverse",
-  success: "bg-ok text-white",
+  success: "bg-ok text-on-ok",
   warning: "bg-warn-bg text-warn-ink border border-warn-line backdrop-blur-xl",
   error: "bg-danger-soft text-danger border border-danger-line backdrop-blur-xl",
 };

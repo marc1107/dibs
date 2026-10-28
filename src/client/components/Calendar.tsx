@@ -52,15 +52,19 @@ export function SwipePager({
   dir: number;
   onPrev: () => void;
   onNext: () => void;
-  children: (guardTap: (fn: () => void) => () => void) => ReactNode;
+  children: ReactNode;
 }) {
-  // A swipe ends with a click on the day under the finger; swallow that one.
+  // A swipe can end with a click on whatever is under the finger (day cell, booking link); swallow it.
   const dragged = useRef(false);
-  const guardTap = (fn: () => void) => () => {
-    if (!dragged.current) fn();
-  };
   return (
-    <div className="relative overflow-hidden">
+    <div
+      className="relative overflow-hidden"
+      onClickCapture={(e) => {
+        if (!dragged.current) return;
+        e.preventDefault();
+        e.stopPropagation();
+      }}
+    >
       <AnimatePresence initial={false} custom={dir} mode="popLayout">
         <motion.div
           key={pageKey}
@@ -86,7 +90,7 @@ export function SwipePager({
           }}
           className="touch-pan-y"
         >
-          {children(guardTap)}
+          {children}
         </motion.div>
       </AnimatePresence>
     </div>

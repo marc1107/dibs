@@ -39,10 +39,10 @@ export function HistoryPage() {
 export function AuditPage() {
   const audit = useAudit();
   const people = usePeople();
-  if (audit.isPending) return <Screen title="Audit-Log" back="/admin"><Spinner /></Screen>;
-  if (!audit.data) return <Screen title="Audit-Log" back="/admin"><ErrorBox message={errorMessage(audit.error)} /></Screen>;
+  if (audit.isPending) return <Screen title="Audit-Log"><Spinner /></Screen>;
+  if (!audit.data) return <Screen title="Audit-Log"><ErrorBox message={errorMessage(audit.error)} /></Screen>;
   return (
-    <Screen title="Audit-Log" back="/admin">
+    <Screen title="Audit-Log">
       <AuditList entries={audit.data} people={people} />
     </Screen>
   );
