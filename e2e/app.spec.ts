@@ -10,6 +10,17 @@ test("shows the login page to signed-out visitors", async ({ page }) => {
   await expect(page.getByRole("button", { name: /Mit Passkey/ })).toBeVisible();
 });
 
+test("offers the dark Home Screen icon while the system is dark", async ({ page }) => {
+  const touchIcon = page.locator('link[rel="apple-touch-icon"]');
+  await page.emulateMedia({ colorScheme: "light" });
+  await page.goto("/login");
+  await expect(touchIcon).toHaveAttribute("href", "/icons/apple-touch-icon.png");
+
+  await page.emulateMedia({ colorScheme: "dark" });
+  await expect(touchIcon).toHaveAttribute("href", "/icons/apple-touch-icon-dark.png");
+  await expect((await page.request.get("/icons/apple-touch-icon-dark.png")).ok()).toBe(true);
+});
+
 test("keeps new people waiting until the admin approves them", async ({ page, browser }) => {
   await devLogin(page, "marc@example.com", "Marc");
   const newbie = await newUser(browser, "neu@example.com", "Neu");
