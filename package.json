@@ -24,21 +24,21 @@
     "deploy": "pnpm build && wrangler deploy"
   },
   "dependencies": {
-    "@better-auth/passkey": "^1.7.13",
+    "@better-auth/passkey": "^1.7.14",
     "@date-fns/tz": "^1.5.0",
     "@pushforge/builder": "^2.0.5",
-    "@tanstack/query-async-storage-persister": "^5.104.5",
-    "@tanstack/react-query": "^5.104.5",
-    "@tanstack/react-query-persist-client": "^5.104.5",
-    "better-auth": "^1.7.13",
+    "@tanstack/query-async-storage-persister": "^5.105.0",
+    "@tanstack/react-query": "^5.105.0",
+    "@tanstack/react-query-persist-client": "^5.105.0",
+    "better-auth": "^1.7.14",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.4",
     "hono": "^4.13.14",
     "idb-keyval": "^6.3.0",
-    "motion": "14.7.1",
+    "motion": "14.9.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
-    "react-router": "^8.5.0",
+    "react-router": "^8.5.1",
     "workbox-core": "^7.4.1",
     "workbox-precaching": "^7.4.1",
     "workbox-routing": "^7.4.1",
@@ -46,13 +46,13 @@
     "zod": "^4.6.7"
   },
   "devDependencies": {
-    "@cloudflare/vite-plugin": "^1.65.0",
-    "@cloudflare/vitest-plugin": "^1.4.7",
-    "@cloudflare/workers-types": "^5.20261026.1",
+    "@cloudflare/vite-plugin": "^1.66.0",
+    "@cloudflare/vitest-plugin": "^1.4.11",
+    "@cloudflare/workers-types": "^5.20261030.1",
     "@eslint/js": "^10.0.1",
     "@playwright/test": "^1.64.1",
     "@tailwindcss/vite": "^4.3.3",
-    "@types/node": "^26.6.5",
+    "@types/node": "^26.6.6",
     "@types/react": "^19.3.0",
     "@types/react-dom": "^19.3.0",
     "@vitejs/plugin-react": "^6.1.2",
@@ -68,7 +68,7 @@
     "vitest": "^5.0.5",
     "workbox-build": "^7.4.1",
     "workbox-window": "^7.4.1",
-    "wrangler": "^4.152.0"
+    "wrangler": "^4.156.0"
   },
   "pnpm": {
     "onlyBuiltDependencies": [
