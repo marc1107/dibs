@@ -33,7 +33,7 @@
     "better-auth": "^1.7.14",
     "date-fns": "^4.4.0",
     "drizzle-orm": "^0.45.4",
-    "hono": "^4.13.14",
+    "hono": "^4.13.16",
     "idb-keyval": "^6.3.0",
     "motion": "14.9.0",
     "react": "^19.3.1",
